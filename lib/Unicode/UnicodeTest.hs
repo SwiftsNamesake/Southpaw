@@ -18,10 +18,10 @@
 
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Main where
+module Unicode.UnicodeTest where
 
-import WinUnicodeConIO
+import qualified Unicode.WinUnicodeConIO as Unicode
 
 main = do
-	WinUnicodeConIO.putStr "♔♕♖♗♘♙|♚♛♜♝♞♟"
-	getChar
+	Unicode.putStr "♔♕♖♗♘♙|♚♛♜♝♞♟"
+	Unicode.getChar

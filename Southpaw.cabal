@@ -22,7 +22,7 @@ synopsis:            Assorted utility modules
 license:             MIT
 
 -- The file containing the license text.
-license-file:        LICENSE
+license-file:        LICENSE.md
 
 -- The package author(s).
 author:              Jonatan H Sundqvist
@@ -45,7 +45,7 @@ cabal-version:       >=1.8
 library
   -- Modules exported by the library.
   exposed-modules:     WaveFront.Parsers, WaveFront.Foreign, WaveFront.Checks, Utilities.Utilities, Utilities.Format, Units.Units, Unicode.WinUnicodeConIO, Unicode.UnicodeTest, Cartesian.Cartesian
-  
+  Hs-source-dirs:      lib
   -- Modules included in this library but not exported.
   -- other-modules:       
   

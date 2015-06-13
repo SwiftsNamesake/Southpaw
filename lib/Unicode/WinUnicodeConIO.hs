@@ -18,11 +18,11 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 
-module WinUnicodeConIO (
-  WinUnicodeConIO.interact,
-  WinUnicodeConIO.putChar, WinUnicodeConIO.putStr, WinUnicodeConIO.putStrLn, WinUnicodeConIO.print,
-  WinUnicodeConIO.getChar, WinUnicodeConIO.getLine, WinUnicodeConIO.getContents, WinUnicodeConIO.readIO,
-  WinUnicodeConIO.readLn,
+module Unicode.WinUnicodeConIO (
+  Unicode.WinUnicodeConIO.interact,
+  Unicode.WinUnicodeConIO.putChar, Unicode.WinUnicodeConIO.putStr, Unicode.WinUnicodeConIO.putStrLn, Unicode.WinUnicodeConIO.print,
+  Unicode.WinUnicodeConIO.getChar, Unicode.WinUnicodeConIO.getLine, Unicode.WinUnicodeConIO.getContents, Unicode.WinUnicodeConIO.readIO,
+  Unicode.WinUnicodeConIO.readLn,
   ePutChar, ePutStr, ePutStrLn, ePrint,
   trace, traceIO
   ) where
