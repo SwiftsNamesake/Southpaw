@@ -14,7 +14,7 @@
 
 
 
-module Utilities.Utilities where
+module Utilities.Utilities (thousands, abbreviate, chunks, numeral) where
 
 
 

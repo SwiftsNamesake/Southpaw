@@ -36,6 +36,7 @@ import Prelude hiding (getContents, putStr, putStrLn) --(IO, Read, Show, String)
 --import qualified System.IO
 import qualified System.IO (getContents)
 import System.IO hiding (getContents, putStr, putStrLn)
+import System.IO.Unsafe (unsafePerformIO)
 import Data.Char (ord)
 
  {- <http://msdn.microsoft.com/en-us/library/ms683231(VS.85).aspx>

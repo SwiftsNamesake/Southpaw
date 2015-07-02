@@ -51,8 +51,8 @@ instance Formattable a => Formattable (a -> [Char]) where
 
 
 
-format :: Formattable a => String -> a
-format f a = interpolate f a
+-- format :: Formattable a => String -> a
+-- format f a = interpolate f a
 
 
 
