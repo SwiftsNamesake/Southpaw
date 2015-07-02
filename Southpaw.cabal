@@ -16,7 +16,7 @@ version:             0.1.0.0
 synopsis:            Assorted utility modules
 
 -- A longer description of the package.
--- description:         
+description:         Various unrelated utility modules.
 
 -- The license under which the package is released.
 license:             MIT
