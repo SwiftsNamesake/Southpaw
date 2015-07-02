@@ -14,7 +14,7 @@
 
 
 
-module Utilities.Utilities (thousands, abbreviate, chunks, numeral) where
+module Southpaw.Utilities.Utilities (thousands, abbreviate, chunks, numeral) where
 
 
 

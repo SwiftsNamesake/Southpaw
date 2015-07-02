@@ -18,7 +18,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 
-module Unicode.WinUnicodeConIO (
+module Southpaw.Unicode.WinUnicodeConIO (
   Unicode.WinUnicodeConIO.interact,
   Unicode.WinUnicodeConIO.putChar, Unicode.WinUnicodeConIO.putStr, Unicode.WinUnicodeConIO.putStrLn, Unicode.WinUnicodeConIO.print,
   Unicode.WinUnicodeConIO.getChar, Unicode.WinUnicodeConIO.getLine, Unicode.WinUnicodeConIO.getContents, Unicode.WinUnicodeConIO.readIO,

@@ -53,7 +53,10 @@ cabal-version:       >=1.10
 
 library
   -- Modules exported by the library.
-  exposed-modules:     WaveFront.Parsers, WaveFront.Foreign, WaveFront.Checks, Utilities.Utilities, Utilities.Format, Units.Units, Unicode.WinUnicodeConIO, Unicode.UnicodeTest, Cartesian.Cartesian
+  exposed-modules:     Southpaw.WaveFront.Parsers,   Southpaw.WaveFront.Foreign, Southpaw.WaveFront.Checks,
+                       Southpaw.Utilities.Utilities, Southpaw.Utilities.Format,  Southpaw.Units.Units,
+                       Southpaw.Unicode.WinUnicodeConIO, Southpaw.Unicode.UnicodeTest,
+                       Southpaw.Cartesian.Cartesian
   
   -- Modules included in this library but not exported.
   -- other-modules:       

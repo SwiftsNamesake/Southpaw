@@ -18,7 +18,7 @@
 
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Unicode.UnicodeTest where
+module Southpaw.Unicode.UnicodeTest where
 
 import qualified Unicode.WinUnicodeConIO as Unicode
 
