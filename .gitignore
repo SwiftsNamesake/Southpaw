@@ -3,5 +3,3 @@
 *.hi
 *.o
 dist/
-.*
-!/.gitignore
