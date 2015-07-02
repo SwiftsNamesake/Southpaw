@@ -22,7 +22,7 @@ synopsis:            Assorted utility modules
 license:             MIT
 
 -- The file containing the license text.
-license-file:        LICENSE
+license-file:        LICENSE.md
 
 -- The package author(s).
 author:              Jonatan H Sundqvist
