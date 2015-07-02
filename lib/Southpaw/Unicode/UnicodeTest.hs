@@ -20,7 +20,7 @@
 
 module Southpaw.Unicode.UnicodeTest where
 
-import qualified Unicode.WinUnicodeConIO as Unicode
+import qualified Southpaw.Unicode.WinUnicodeConIO as Unicode
 
 main = do
 	Unicode.putStr "♔♕♖♗♘♙|♚♛♜♝♞♟"

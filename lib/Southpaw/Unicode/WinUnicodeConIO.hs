@@ -19,10 +19,10 @@
 
 
 module Southpaw.Unicode.WinUnicodeConIO (
-  Unicode.WinUnicodeConIO.interact,
-  Unicode.WinUnicodeConIO.putChar, Unicode.WinUnicodeConIO.putStr, Unicode.WinUnicodeConIO.putStrLn, Unicode.WinUnicodeConIO.print,
-  Unicode.WinUnicodeConIO.getChar, Unicode.WinUnicodeConIO.getLine, Unicode.WinUnicodeConIO.getContents, Unicode.WinUnicodeConIO.readIO,
-  Unicode.WinUnicodeConIO.readLn,
+  Southpaw.Unicode.WinUnicodeConIO.interact,
+  Southpaw.Unicode.WinUnicodeConIO.putChar, Southpaw.Unicode.WinUnicodeConIO.putStr, Southpaw.Unicode.WinUnicodeConIO.putStrLn, Southpaw.Unicode.WinUnicodeConIO.print,
+  Southpaw.Unicode.WinUnicodeConIO.getChar, Southpaw.Unicode.WinUnicodeConIO.getLine, Southpaw.Unicode.WinUnicodeConIO.getContents, Southpaw.Unicode.WinUnicodeConIO.readIO,
+  Southpaw.Unicode.WinUnicodeConIO.readLn,
   ePutChar, ePutStr, ePutStrLn, ePrint,
   trace, traceIO
   ) where
