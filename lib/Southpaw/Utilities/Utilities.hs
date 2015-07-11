@@ -14,7 +14,7 @@
 
 
 
-module Southpaw.Utilities.Utilities (thousands, abbreviate, chunks, numeral) where
+module Southpaw.Utilities.Utilities (thousands, abbreviate, chunks, numeral, split, pairwise) where
 
 
 
@@ -65,6 +65,9 @@ split c s = unfoldr cut s
 -- split c s = filter (/=[c]) . groupBy ((==) `on` (==c)) $ s
 
 
+-- |
+pairwise :: [a] -> [(a, a)]
+pairwise xs = zip xs $ tail xs
 
 
 -- Verb conjugation
