@@ -61,7 +61,7 @@ widgetSize widget = do
 
 
 -- |
-createWindowWithCanvas :: Int -> Int -> appstate -> IO App
+createWindowWithCanvas :: Int -> Int -> appstate -> IO (App appstate)
 createWindowWithCanvas w h appstate = do
 	--
 	initGUI

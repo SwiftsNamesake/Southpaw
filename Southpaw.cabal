@@ -57,7 +57,8 @@ library
                        Southpaw.Utilities.Utilities, Southpaw.Utilities.Format,  Southpaw.Units.Units,
                        Southpaw.Unicode.WinUnicodeConIO, Southpaw.Unicode.UnicodeTest,
                        Southpaw.Cartesian.Cartesian,
-                       Southpaw.Picasso.Palette
+                       Southpaw.Picasso.Palette,
+                       Southpaw.Interactive.Application
   
   -- Modules included in this library but not exported.
   -- other-modules:       
@@ -66,7 +67,7 @@ library
   other-extensions:    ForeignFunctionInterface, FlexibleInstances, CPP, NoImplicitPrelude
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.7 && <4.8, containers >=0.5 && <0.6, Win32 >=2.3 && <2.4, cairo
+  build-depends:       base >=4.7 && <4.8, containers >=0.5 && <0.6, Win32 >=2.3 && <2.4, cairo, gtk3
   
   -- Directories containing source files.
   hs-source-dirs:      lib
