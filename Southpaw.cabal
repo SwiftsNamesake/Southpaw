@@ -58,7 +58,7 @@ library
                        Southpaw.Unicode.WinUnicodeConIO, Southpaw.Unicode.UnicodeTest,
                        Southpaw.Cartesian.Cartesian,
                        Southpaw.Picasso.Palette,
-                       Southpaw.Interactive.Application
+                       Southpaw.Interactive.Application, Southpaw.Interactive.RenderUtils
   
   -- Modules included in this library but not exported.
   -- other-modules:       
