@@ -26,8 +26,8 @@ module Southpaw.Interactive.Application where
 -- We'll need these
 ---------------------------------------------------------------------------------------------------
 import Graphics.UI.Gtk          --
-import Graphics.Rendering.Cairo --
 import Data.IORef               --
+-- import Graphics.Rendering.Cairo --
 
 
 

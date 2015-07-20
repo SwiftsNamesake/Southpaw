@@ -1,14 +1,14 @@
 -- |
 -- Module      : RenderUtils
 -- Description : Cairo rendering utilities
--- Copyright   : (c) Jonatan H Sundqvist, year
+-- Copyright   : (c) Jonatan H Sundqvist, 2015
 -- License     : MIT
 -- Maintainer  : Jonatan H Sundqvist
 -- Stability   : experimental|stable
 -- Portability : POSIX (not sure)
 -- 
 
--- Created date year
+-- Created July 12 2015
 
 -- TODO | - 
 --        - 
@@ -18,7 +18,7 @@
 
 
 
-module Southpaw.Picasso.RenderUtils where
+module Southpaw.Picasso.RenderUtils (renderCentredText) where
 
 
 
@@ -26,6 +26,7 @@ module Southpaw.Picasso.RenderUtils where
 -- We'll need these
 ---------------------------------------------------------------------------------------------------
 import qualified Graphics.Rendering.Cairo as Cairo
+import Data.Complex
 
 
 
@@ -35,7 +36,7 @@ import qualified Graphics.Rendering.Cairo as Cairo
 -- General rendering utilities --------------------------------------------------------------------
 -- |
 -- TODO: General anchor (?)
-renderCentredText :: Point -> String -> Cairo.Render ()
+renderCentredText :: Complex Double -> String -> Cairo.Render ()
 renderCentredText (cx:+cy) text = do
 	extents <- Cairo.textExtents text
 	let (w, h) = (Cairo.textExtentsWidth extents, Cairo.textExtentsHeight extents)

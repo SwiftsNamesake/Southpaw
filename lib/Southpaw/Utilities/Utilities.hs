@@ -11,10 +11,27 @@
 
 -- SPEC | -
 --        -
+-- |
+-- Module      : Southpaw.Utilities.Utilities
+-- Description : General functional bits and bobs
+-- Copyright   : (c) Jonatan H Sundqvist, year
+-- License     : MIT
+-- Maintainer  : Jonatan H Sundqvist
+-- Stability   : experimental|stable
+-- Portability : POSIX (not sure)
+-- 
+
+-- Created March 08 2015
+
+-- TODO | - 
+--        - 
+
+-- SPEC | -
+--        -
 
 
 
-module Southpaw.Utilities.Utilities (thousands, abbreviate, chunks, numeral, split, pairwise) where
+module Southpaw.Utilities.Utilities (thousands, abbreviate, chunks, numeral, split, pairwise, cuts, count) where
 
 
 
@@ -57,17 +74,30 @@ chunks n xs = let (chunk, rest) = splitAt n xs in chunk : chunks n rest
 
 
 -- |
--- TODO: Rename (?)
-split :: Eq a => a -> [a] -> [[a]]
-split c s = unfoldr cut s
+splitWith :: Eq a => ([a] -> ([a], [a])) -> [a] -> [[a]]
+splitWith f = unfoldr cut
   where cut [] = Nothing
-        cut xs = let (token, rest) = span (/=c) xs in Just (token, dropWhile (==c) rest)
--- split c s = filter (/=[c]) . groupBy ((==) `on` (==c)) $ s
+        cut xs = Just $ f xs
 
 
 -- |
-pairwise :: [a] -> [(a, a)]
-pairwise xs = zip xs $ tail xs
+-- TODO: Rename (?)
+split :: Eq a => a -> [a] -> [[a]]
+split c = splitWith $ \ xs -> let (token, rest) = span (/=c) xs in (token, dropWhile (==c) rest)
+-- split c s = filter (/=[c]) . groupBy ((==) `on` (==c)) $ s
+
+
+-- | Same as Python's str.split (I think) (eg. split '|' "a||c" == ["a", "", "c"])
+-- TODO: Rename
+-- TODO: Easier to implement with groupBy (?)
+cuts :: Eq a => a -> [a] -> [[a]]
+cuts c = splitWith $ \ xs -> let (token, rest) = span (/=c) xs in (token, drop 1 rest)
+
+
+-- |
+-- TODO: Accept a function (eg. (a -> a -> b))
+pairwise :: (a -> a -> b) -> [a] -> [b]
+pairwise f xs = zipWith f xs $ drop 1 xs
 
 
 -- Verb conjugation
@@ -99,6 +129,11 @@ numeral n = case n of
   12 -> "twelve"
   _  -> thousands (n :: Int)
 
+
+-- General utilities ------------------------------------------------------------------------------
+-- | Counts the number of elements that satisfy the predicate
+count :: (a -> Bool) -> [a] -> Int
+count p = length . filter p
 
 
 ---------------------------------------------------------------------------------------------------
