@@ -11,7 +11,7 @@
 -- Created July 22 2015
 -- https://github.com/peterhil/hs-openal-proto/blob/master/src/Sound/OpenAL/Proto/Play.hs
 
--- TODO | - 
+-- TODO | - Proper error handling (IO exceptions, Either, or something else)
 --        - 
 
 -- SPEC | -
@@ -55,7 +55,7 @@ import GHC.Float (float2Double)
 
 
 ---------------------------------------------------------------------------------------------------
--- Data
+-- Types
 ---------------------------------------------------------------------------------------------------
 type Sample = Double
 
@@ -64,26 +64,30 @@ type Sample = Double
 ---------------------------------------------------------------------------------------------------
 -- Data
 ---------------------------------------------------------------------------------------------------
-sampleRate = 44100 :: Int
-
-
-
----------------------------------------------------------------------------------------------------
--- Functions
----------------------------------------------------------------------------------------------------
-bufferSize :: Storable a => Int -> a -> Double -> Int
-bufferSize nchannels sampleType secs = fromIntegral (numSamples secs) * sizeOf sampleType * nchannels
+sampleRate = 44100 :: Int -- TODO: Don't hard-code sample rate
 
 mono8BufferSize    = bufferSize 1 (undefined :: Word8)
 mono16BufferSize   = bufferSize 1 (undefined :: Int16)
 stereo8BufferSize  = bufferSize 2 (undefined :: Word8)
 stereo16BufferSize = bufferSize 2 (undefined :: Int16)
 
+
+
+---------------------------------------------------------------------------------------------------
+-- Functions
+---------------------------------------------------------------------------------------------------
+-- |
+bufferSize :: Storable a => Int -> a -> Double -> Int
+bufferSize nchannels sampleType secs = fromIntegral (numSamples secs) * sizeOf sampleType * nchannels
+
+
+-- |
 numSamples :: Double -> NumSamples
 numSamples secs = round (fromIntegral(sampleRate) * secs) :: NumSamples
 
 --------------------------------------------------------------------------------
 
+-- |
 sine :: Double -> [Sample]
 sine freq = cycle $ take n $ map sin [0, d..]
 	 where d = 2 * pi * freq / sr
@@ -92,22 +96,24 @@ sine freq = cycle $ take n $ map sin [0, d..]
 
 --------------------------------------------------------------------------------
 
+-- |
 pcm :: (Integral a) => Int -> Sample -> a
 pcm bits sample = truncate $ sample * (fromIntegral (2 ^ (bits - 1)) - 1)
 
 --------------------------------------------------------------------------------
--- # From http://dev.stephendiehl.com/hask/#ffi
 
+-- |
+-- # From http://dev.stephendiehl.com/hask/#ffi
 vecPtr :: VM.MVector s CInt -> ForeignPtr CInt
 vecPtr = fst . VM.unsafeToForeignPtr0
 
 --------------------------------------------------------------------------------
 
 
+-- |
 -- captureSamples :: Device -> Ptr a -> NumSamples -> IO ()
 -- allocaBytes :: Int -> (Ptr a -> IO b) -> IO b
 -- allocaBytesAligned :: Int -> Int -> (Ptr a -> IO b) -> IO b
-
 withCaptureDevice :: (Maybe String) -> Double -> (Device -> IO c) -> IO c
 withCaptureDevice specifier secs action = bracket acquire finally action
 	where format      = Mono16
@@ -118,6 +124,7 @@ withCaptureDevice specifier secs action = bracket acquire finally action
 	                       captureCloseDevice mic
 
 
+-- |
 -- capture :: V.Storable a => (Maybe String) -> Double -> IO (MemoryRegion a)
 -- capture :: Storable a => (Maybe String) -> Double -> (MemoryRegion a -> IO c) -> IO c
 -- capture :: (Maybe String) -> Double -> IO (V.Vector Int16)
