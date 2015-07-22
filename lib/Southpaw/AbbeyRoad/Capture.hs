@@ -74,10 +74,10 @@ sampleRate = 44100 :: Int
 bufferSize :: Storable a => Int -> a -> Double -> Int
 bufferSize nchannels sampleType secs = fromIntegral (numSamples secs) * sizeOf sampleType * nchannels
 
-mono8BufferSize    = bufferSize 1 (undefined::Word8)
-mono16BufferSize   = bufferSize 1 (undefined::Int16)
-stereo8BufferSize  = bufferSize 2 (undefined::Word8)
-stereo16BufferSize = bufferSize 2 (undefined::Int16)
+mono8BufferSize    = bufferSize 1 (undefined :: Word8)
+mono16BufferSize   = bufferSize 1 (undefined :: Int16)
+stereo8BufferSize  = bufferSize 2 (undefined :: Word8)
+stereo16BufferSize = bufferSize 2 (undefined :: Int16)
 
 numSamples :: Double -> NumSamples
 numSamples secs = round (fromIntegral(sampleRate) * secs) :: NumSamples
@@ -86,9 +86,9 @@ numSamples secs = round (fromIntegral(sampleRate) * secs) :: NumSamples
 
 sine :: Double -> [Sample]
 sine freq = cycle $ take n $ map sin [0, d..]
-     where d = 2 * pi * freq / sr
-           n = truncate (sr / freq)
-           sr = fromIntegral sampleRate
+	 where d = 2 * pi * freq / sr
+	       n = truncate (sr / freq)
+	       sr = fromIntegral sampleRate
 
 --------------------------------------------------------------------------------
 
@@ -109,46 +109,36 @@ vecPtr = fst . VM.unsafeToForeignPtr0
 -- allocaBytesAligned :: Int -> Int -> (Ptr a -> IO b) -> IO b
 
 withCaptureDevice :: (Maybe String) -> Double -> (Device -> IO c) -> IO c
-withCaptureDevice specifier secs action =
-    bracket
-        (let format = Mono16 in -- TODO handle format more flexibly
-         do (Just mic) <- captureOpenDevice specifier (fromIntegral sampleRate) format (numSamples secs)
-            captureStart mic
-            return mic
-            )
-        (\mic -> do captureStop mic
-                    captureCloseDevice mic
-                    )
-        (action)
+withCaptureDevice specifier secs action = bracket acquire finally action
+	where format      = Mono16
+	      acquire     = do (Just mic) <- captureOpenDevice specifier (fromIntegral sampleRate) format (numSamples secs)
+	                       captureStart mic
+	                       return mic
+	      finally mic = do captureStop mic
+	                       captureCloseDevice mic
+
 
 -- capture :: V.Storable a => (Maybe String) -> Double -> IO (MemoryRegion a)
 -- capture :: Storable a => (Maybe String) -> Double -> (MemoryRegion a -> IO c) -> IO c
 -- capture :: (Maybe String) -> Double -> IO (V.Vector Int16)
 capture :: Maybe String -> Double -> (MemoryRegion CInt -> IO c) -> IO c -- According to GHCi
-capture specifier duration action =
-        let num = (numSamples duration)
-            bytes = (mono16BufferSize duration)
-        in
-        do
-            withCaptureDevice specifier duration $ \mic -> do
-                -- TODO: Why do we sleep for three seconds before recording?
-                -- Probably because we need to wait before invoking 'captureStop'
-                -- TODO: Handle delay more flexibly (move audio to a different thread?)
-                sleep $ realToFrac duration
+capture specifier duration action = do
+	withCaptureDevice specifier duration $ \mic -> do
+		-- TODO: Why do we sleep for three seconds before recording?
+		-- Probably because we need to wait before invoking 'captureStop'
+		-- TODO: Handle delay more flexibly (move audio to a different thread?)
+		sleep $ realToFrac duration
 
-                -- mutableV <- V.thaw $ V.replicate (fromIntegral num) (fromIntegral 0)
-                mutableV <- V.thaw $ V.fromList $ map (pcm 16) $ take (fromIntegral num) $ sine 220
-                withForeignPtr (vecPtr mutableV) $ \ptr -> do
-                    captureSamples mic ptr (fromIntegral num)
-                rec <- V.freeze mutableV
+		-- mutableV <- V.thaw $ V.replicate (fromIntegral num) (fromIntegral 0)
+		mutableV <- V.thaw $ V.fromList $ map (pcm 16) $ take (fromIntegral num) $ sine 220
+		withForeignPtr (vecPtr mutableV) $ \ptr -> do
+			captureSamples mic ptr (fromIntegral num)
+		rec <- V.freeze mutableV
 
-                -- recordedBytes <- get $ captureNumSamples mic
-                -- putStrLn $ "Got samples: " ++ (show recordedBytes)
+		-- recordedBytes <- get $ captureNumSamples mic
+		-- putStrLn $ "Got samples: " ++ (show recordedBytes)
 
-                let (mem, size) = V.unsafeToForeignPtr0 rec
-                withForeignPtr mem $ \ptr -> do
-                    action (
-                       MemoryRegion
-                       ptr
-                       (fromIntegral size) -- (fromIntegral recordedBytes)
-                       )
+		let (mem, size) = V.unsafeToForeignPtr0 rec
+		withForeignPtr mem $ \ptr -> action $ MemoryRegion ptr (fromIntegral size)
+	where num = (numSamples duration)
+	      bytes = (mono16BufferSize duration)
