@@ -53,13 +53,15 @@ cabal-version:       >=1.10
 
 library
   -- Modules exported by the library.
-  exposed-modules:     Southpaw.WaveFront.Parsers,   Southpaw.WaveFront.Foreign, Southpaw.WaveFront.Checks, Southpaw.WaveFront.SampleApp, Southpaw.WaveFront.Utilities,
+  exposed-modules:     Southpaw.WaveFront.Parsers,   Southpaw.WaveFront.Foreign, Southpaw.WaveFront.Checks, Southpaw.WaveFront.Utilities,
                        Southpaw.Michelangelo.Utils,
+                       Southpaw.AbbeyRoad.Capture,
                        Southpaw.Utilities.Utilities, Southpaw.Utilities.Format,  Southpaw.Units.Units,
                        Southpaw.Unicode.WinUnicodeConIO, Southpaw.Unicode.UnicodeTest,
                        Southpaw.Cartesian.Cartesian,
                        Southpaw.Picasso.Palette, Southpaw.Picasso.RenderUtils,
                        Southpaw.Interactive.Application
+                       --Southpaw.WaveFront.SampleApp,
   
   -- Modules included in this library but not exported.
   -- other-modules:       
@@ -72,11 +74,12 @@ library
                        containers >=0.5 && <0.6,
                        Win32 >=2.3 && <2.4,
                        OpenGL,
-                       GLUT,
+                       GLFW-b,
                        filepath,
                        gtk3,
                        cairo,
-                       bytestring,
+                       bytestring, vector,
+                       ALUT, OpenAL,
                        JuicyPixels >=3.2
   
   -- Directories containing source files.
