@@ -72,11 +72,6 @@ type Sample = Double
 ---------------------------------------------------------------------------------------------------
 samplerate = 44100 :: Int -- TODO: Don't hard-code sample rate
 
-mono8BufferSize    = bufferSize 1 (undefined :: Word8)
-mono16BufferSize   = bufferSize 1 (undefined :: Int16)
-stereo8BufferSize  = bufferSize 2 (undefined :: Word8)
-stereo16BufferSize = bufferSize 2 (undefined :: Int16)
-
 
 
 ---------------------------------------------------------------------------------------------------
