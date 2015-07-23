@@ -12,7 +12,7 @@
 -- https://github.com/peterhil/hs-openal-proto/blob/master/src/Sound/OpenAL/Proto/Play.hs
 
 -- TODO | - Proper error handling (IO exceptions, Either, or something else)
---        - 
+--        - Remove redundant imports
 
 -- SPEC | -
 --        -
@@ -34,6 +34,8 @@ import Data.Int                --
 import Data.List (intersperse) --
 import Data.Word               --
 
+import GHC.Float (float2Double) --
+
 import Foreign                   --
 import Foreign.C.Types           --
 import Foreign.ForeignPtr        --
@@ -47,11 +49,11 @@ import Sound.OpenAL.AL.BasicTypes (ALsizei) --
 import Sound.OpenAL.ALC.Capture             --
 
 import System.Exit (exitFailure)                    --
-import System.IO (hPutStrLn, stderr)                --
+import System.IO   (hPutStrLn, stderr, openBinaryFile, IOMode(ReadMode), hClose, hFileSize, hGetBuf) --
+
 import qualified Data.Vector.Storable as V          --
 import qualified Data.Vector.Storable.Mutable as VM --
 
-import GHC.Float (float2Double) --
 
 
 
@@ -77,6 +79,7 @@ stereo16BufferSize = bufferSize 2 (undefined :: Int16)
 ---------------------------------------------------------------------------------------------------
 -- Functions
 ---------------------------------------------------------------------------------------------------
+
 -- |
 bufferSize :: Storable a => Int -> a -> Double -> Int
 bufferSize nchannels sampleType secs = fromIntegral (numSamples secs) * sizeOf sampleType * nchannels
@@ -86,7 +89,7 @@ bufferSize nchannels sampleType secs = fromIntegral (numSamples secs) * sizeOf s
 numSamples :: Double -> NumSamples
 numSamples secs = round (fromIntegral(samplerate) * secs) :: NumSamples
 
---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
 
 -- |
 sine :: Double -> [Sample]
@@ -95,35 +98,35 @@ sine freq = cycle $ take n $ map sin [0, d..]
 	       n = truncate (sr / freq)
 	       sr = fromIntegral samplerate
 
---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
 
 -- |
 pcm :: (Integral a) => Int -> Sample -> a
 pcm bits sample = truncate $ sample * (fromIntegral (2 ^ (bits - 1)) - 1)
 
---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
 
 -- |
 -- # From http://dev.stephendiehl.com/hask/#ffi
 vecPtr :: VM.MVector s CInt -> ForeignPtr CInt
 vecPtr = fst . VM.unsafeToForeignPtr0
 
---------------------------------------------------------------------------------
-
+---------------------------------------------------------------------------------------------------
 -- |
 -- captureSamples :: Device -> Ptr a -> NumSamples -> IO ()
 -- allocaBytes :: Int -> (Ptr a -> IO b) -> IO b
 -- allocaBytesAligned :: Int -> Int -> (Ptr a -> IO b) -> IO b
 -- TODO: Find out why captureOpenDevice returns Nothing when secs is 0
 -- TODO: Pass in failure action (?)
-withCaptureDevice :: (Maybe String) -> Double -> (Device -> IO c) -> IO c -> IO c
-withCaptureDevice specifier secs onsuccess onfailure = acquire >>= \ mdevice -> case mdevice of
-		Just device -> bracket acquire finally onsuccess --
-		Nothing     -> onfailure                          --
-	where format      = Mono16
-	      finally mic = captureStop mic >> captureCloseDevice mic
-	      record mic  = captureStart mic >> return mic
-	      acquire     = captureOpenDevice specifier (fromIntegral samplerate) format (numSamples secs)
+withCaptureDevice :: (Maybe String) -> Double -> (Device -> IO c) -> IO (Maybe c)
+withCaptureDevice specifier secs onsuccess = bracket acquire finally between
+	where format       = Mono16
+	      finally      = maybe (return False) (\mic -> captureStop mic >> captureCloseDevice mic)
+	      record mic   = captureStart mic >> return mic
+	      acquire      = captureOpenDevice specifier (fromIntegral samplerate) format (numSamples secs)
+	      between mmic = case mmic of
+	      	Just mic -> onsuccess mic >>= return . Just
+	      	Nothing  -> return Nothing
 
 
 -- |
@@ -131,14 +134,41 @@ withCaptureDevice specifier secs onsuccess onfailure = acquire >>= \ mdevice -> 
 -- capture :: V.Storable a => (Maybe String) -> Double -> IO (MemoryRegion a)
 -- capture :: Storable a => (Maybe String) -> Double -> (MemoryRegion a -> IO c) -> IO c
 -- capture :: (Maybe String) -> Double -> IO (V.Vector Int16)
-capture :: Maybe String -> Double -> (MemoryRegion CInt -> IO c) -> IO c -- According to GHCi
-capture specifier duration action = do
-	withCaptureDevice specifier duration $ \mic -> do
-		sleep $ realToFrac duration                                                          -- Sleep until we should stop recording
-		mutableV <- V.thaw . V.fromList . map (pcm 16) . take (fromIntegral num) $ sine 220  --
-		withForeignPtr (vecPtr mutableV) $ \ptr -> captureSamples mic ptr (fromIntegral num) --
-		rec <- V.freeze mutableV                                                             --
-		let (mem, size) = V.unsafeToForeignPtr0 rec
-		withForeignPtr mem $ \ptr -> action $ MemoryRegion ptr (fromIntegral size)
-	where num   = (numSamples duration)
-	      bytes = (mono16BufferSize duration)
+capture :: Maybe String -> Double -> (MemoryRegion CInt -> IO c) -> IO (Maybe c) -- According to GHCi
+capture specifier duration action = withCaptureDevice specifier duration record
+	where num        = numSamples duration
+	      bytes      = mono16BufferSize duration
+	      record mic = do
+	      	sleep $ realToFrac duration                                                          -- Sleep until we should stop recording
+	      	mutableV <- V.thaw . V.fromList . map (pcm 16) . take (fromIntegral num) $ sine 220  -- 
+	      	withForeignPtr (vecPtr mutableV) $ \ptr -> captureSamples mic ptr (fromIntegral num) -- 
+	      	rec <- V.freeze mutableV                                                             -- 
+	      	let (mem, size) = V.unsafeToForeignPtr0 rec                                          -- 
+	      	withForeignPtr mem $ \ptr -> action $ MemoryRegion ptr (fromIntegral size)           -- 
+
+---------------------------------------------------------------------------------------------------
+
+-- |
+checkAlErrors :: IO [String]
+checkAlErrors = do
+            errs <- get $ alErrors
+            return [ d | ALError _ d <- errs ]
+
+
+-- |
+checkAlcErrors :: Device -> IO [String]
+checkAlcErrors device = do
+            errs <- get $ alcErrors device
+            return [ d | ALCError _ d <- errs ]
+
+---------------------------------------------------------------------------------------------------
+
+withFileContents :: FilePath -> (MemoryRegion a -> IO b) -> IO b
+withFileContents filePath action =
+   bracket (openBinaryFile filePath ReadMode) hClose $ \handle -> do
+      numBytes <- fmap fromIntegral (hFileSize handle)
+      allocaBytes numBytes $ \buf -> do
+         bytesRead <- hGetBuf handle buf numBytes
+         when (bytesRead /= numBytes) $
+            ioError (userError "hGetBuf")
+         action (MemoryRegion buf (fromIntegral numBytes))
