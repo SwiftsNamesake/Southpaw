@@ -126,7 +126,7 @@ vecPtr = fst . VM.unsafeToForeignPtr0
 withCaptureDevice :: (Maybe String) -> Double -> (Device -> IO c) -> IO (Maybe c)
 withCaptureDevice specifier secs onsuccess = bracket acquire finally between
 	where format       = Mono16
-	      finally      = maybe (return False) (\mic -> putStrLn "Closing device..." >> captureStop mic >> captureCloseDevice mic)
+	      finally      = maybe (return False) $ \mic -> captureStop mic >> captureCloseDevice mic
 	      record mic   = captureStart mic >> return mic
 	      acquire      = captureOpenDevice specifier (fromIntegral samplerate) format (numSamples secs)
 	      between mmic = case mmic of
@@ -136,9 +136,7 @@ withCaptureDevice specifier secs onsuccess = bracket acquire finally between
 
 -- |
 -- TODO: Refactor
--- capture :: V.Storable a => (Maybe String) -> Double -> IO (MemoryRegion a)
 -- capture :: Storable a => (Maybe String) -> Double -> (MemoryRegion a -> IO c) -> IO c
--- capture :: (Maybe String) -> Double -> IO (V.Vector Int16)
 capture :: Maybe String -> Double -> (MemoryRegion CInt -> IO c) -> IO (Maybe c) -- According to GHCi
 capture specifier duration action = withCaptureDevice specifier duration record
 	where num        = numSamples duration
@@ -164,16 +162,3 @@ checkAlcErrors :: Device -> IO [String]
 checkAlcErrors device = do
 	errs <- get $ alcErrors device
 	return [ d | ALCError _ d <- errs ]
-
----------------------------------------------------------------------------------------------------
-
--- |
-withFileContents :: FilePath -> (MemoryRegion a -> IO b) -> IO b
-withFileContents filePath action =
-   bracket (openBinaryFile filePath ReadMode) hClose $ \handle -> do
-      numBytes <- fmap fromIntegral (hFileSize handle)
-      allocaBytes numBytes $ \buf -> do
-         bytesRead <- hGetBuf handle buf numBytes
-         when (bytesRead /= numBytes) $
-            ioError (userError "hGetBuf")
-         action (MemoryRegion buf (fromIntegral numBytes))
