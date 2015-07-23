@@ -9,10 +9,13 @@
 -- 
 
 -- Created July 22 2015
--- https://github.com/peterhil/hs-openal-proto/blob/master/src/Sound/OpenAL/Proto/Play.hs
+-- 
+-- I am forever indebted to the author of this module: https://github.com/peterhil/hs-openal-proto/blob/master/src/Sound/OpenAL/Proto/Play.hs
+-- Saved me from having to figure out how to construct memory views by myself.
 
 -- TODO | - Proper error handling (IO exceptions, Either, or something else)
 --        - Remove redundant imports
+--        - Include the legal note from Peter's repo
 
 -- SPEC | -
 --        -
@@ -26,9 +29,9 @@ module Southpaw.AbbeyRoad.Capture where
 ---------------------------------------------------------------------------------------------------
 -- We'll need these
 ---------------------------------------------------------------------------------------------------
-import Control.Concurrent (threadDelay)      --
-import Control.Exception  (bracket, finally) --
-import Control.Monad      (unless, when)     --
+import Control.Concurrent (threadDelay)  --
+import Control.Exception  (bracket)      --
+import Control.Monad      (unless, when) --
 
 import Data.Int                --
 import Data.List (intersperse) --
@@ -36,20 +39,20 @@ import Data.Word               --
 
 import GHC.Float (float2Double) --
 
-import Foreign                   --
-import Foreign.C.Types           --
-import Foreign.ForeignPtr        --
-import Foreign.ForeignPtr.Unsafe --
-import Foreign.Ptr               --
+import Foreign                   -- Import the foreigners!
+import Foreign.C.Types           -- 
+import Foreign.ForeignPtr        -- 
+import Foreign.ForeignPtr.Unsafe -- 
+import Foreign.Ptr               -- 
 
-import Sound.ALUT                --
+import Sound.ALUT                -- 
 
-import Sound.OpenAL                         --
-import Sound.OpenAL.AL.BasicTypes (ALsizei) --
-import Sound.OpenAL.ALC.Capture             --
+import Sound.OpenAL                         -- 
+import Sound.OpenAL.AL.BasicTypes (ALsizei) -- 
+import Sound.OpenAL.ALC.Capture             -- 
 
-import System.Exit (exitFailure)                    --
-import System.IO   (hPutStrLn, stderr, openBinaryFile, IOMode(ReadMode), hClose, hFileSize, hGetBuf) --
+import System.Exit (exitFailure)                                                                     -- 
+import System.IO   (hPutStrLn, stderr, openBinaryFile, IOMode(ReadMode), hClose, hFileSize, hGetBuf) -- 
 
 import qualified Data.Vector.Storable as V          --
 import qualified Data.Vector.Storable.Mutable as VM --
@@ -112,20 +115,22 @@ vecPtr :: VM.MVector s CInt -> ForeignPtr CInt
 vecPtr = fst . VM.unsafeToForeignPtr0
 
 ---------------------------------------------------------------------------------------------------
+
 -- |
 -- captureSamples :: Device -> Ptr a -> NumSamples -> IO ()
 -- allocaBytes :: Int -> (Ptr a -> IO b) -> IO b
 -- allocaBytesAligned :: Int -> Int -> (Ptr a -> IO b) -> IO b
 -- TODO: Find out why captureOpenDevice returns Nothing when secs is 0
 -- TODO: Pass in failure action (?)
+-- TODO: Rename (eg. 'record' to 'startRecording') (?)
 withCaptureDevice :: (Maybe String) -> Double -> (Device -> IO c) -> IO (Maybe c)
 withCaptureDevice specifier secs onsuccess = bracket acquire finally between
 	where format       = Mono16
-	      finally      = maybe (return False) (\mic -> captureStop mic >> captureCloseDevice mic)
+	      finally      = maybe (return False) (\mic -> putStrLn "Closing device..." >> captureStop mic >> captureCloseDevice mic)
 	      record mic   = captureStart mic >> return mic
 	      acquire      = captureOpenDevice specifier (fromIntegral samplerate) format (numSamples secs)
 	      between mmic = case mmic of
-	      	Just mic -> onsuccess mic >>= return . Just
+	      	Just mic -> record mic >> onsuccess mic >>= return . Just
 	      	Nothing  -> return Nothing
 
 
@@ -137,7 +142,6 @@ withCaptureDevice specifier secs onsuccess = bracket acquire finally between
 capture :: Maybe String -> Double -> (MemoryRegion CInt -> IO c) -> IO (Maybe c) -- According to GHCi
 capture specifier duration action = withCaptureDevice specifier duration record
 	where num        = numSamples duration
-	      bytes      = mono16BufferSize duration
 	      record mic = do
 	      	sleep $ realToFrac duration                                                          -- Sleep until we should stop recording
 	      	mutableV <- V.thaw . V.fromList . map (pcm 16) . take (fromIntegral num) $ sine 220  -- 
@@ -151,18 +155,19 @@ capture specifier duration action = withCaptureDevice specifier duration record
 -- |
 checkAlErrors :: IO [String]
 checkAlErrors = do
-            errs <- get $ alErrors
-            return [ d | ALError _ d <- errs ]
+	errs <- get $ alErrors
+	return [ d | ALError _ d <- errs ]
 
 
 -- |
 checkAlcErrors :: Device -> IO [String]
 checkAlcErrors device = do
-            errs <- get $ alcErrors device
-            return [ d | ALCError _ d <- errs ]
+	errs <- get $ alcErrors device
+	return [ d | ALCError _ d <- errs ]
 
 ---------------------------------------------------------------------------------------------------
 
+-- |
 withFileContents :: FilePath -> (MemoryRegion a -> IO b) -> IO b
 withFileContents filePath action =
    bracket (openBinaryFile filePath ReadMode) hClose $ \handle -> do
