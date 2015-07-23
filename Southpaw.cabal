@@ -46,9 +46,9 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 
---source-repository head
---  type: git
--- location: https://github.com/SwiftsNamesake/_____.git
+source-repository head
+  type: git
+  location: https://github.com/SwiftsNamesake/Southpaw.git
 
 
 library
