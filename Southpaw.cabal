@@ -53,15 +53,18 @@ source-repository head
 
 library
   -- Modules exported by the library.
-  exposed-modules:     Southpaw.WaveFront.Parsers,   Southpaw.WaveFront.Foreign, Southpaw.WaveFront.Checks, Southpaw.WaveFront.Utilities,
-                       Southpaw.Michelangelo.Utils,
+  exposed-modules:     Southpaw.WaveFront.Parsers,   Southpaw.WaveFront.Foreign, Southpaw.WaveFront.Checks, Southpaw.WaveFront.Utilities, Southpaw.WaveFront.Load
+                       Southpaw.WaveFront.SampleApp, 
+                       
+                       Southpaw.Michelangelo.Utils, Southpaw.Michelangelo.Shaders
+
                        Southpaw.AbbeyRoad.Capture,
-                       Southpaw.Utilities.Utilities, Southpaw.Utilities.Format,  Southpaw.Units.Units,
-                       Southpaw.Unicode.WinUnicodeConIO, Southpaw.Unicode.UnicodeTest,
+                       Southpaw.Utilities.Utilities, Southpaw.Units.Units,
                        Southpaw.Cartesian.Cartesian,
                        Southpaw.Picasso.Palette, Southpaw.Picasso.RenderUtils,
                        Southpaw.Interactive.Application
-                       --Southpaw.WaveFront.SampleApp,
+                       -- Southpaw.Utilities.Format,
+                       --Southpaw.Unicode.WinUnicodeConIO, Southpaw.Unicode.UnicodeTest,
   
   -- Modules included in this library but not exported.
   -- other-modules:       
@@ -70,21 +73,36 @@ library
   other-extensions:    ForeignFunctionInterface, FlexibleInstances, CPP, NoImplicitPrelude
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.7 && <4.8,
+  build-depends:       base       >=4.7 && <4.8,
                        containers >=0.5 && <0.6,
-                       Win32 >=2.3 && <2.4,
-                       OpenGL,
+                       Win32      >=2.3 && <2.4,
+                       OpenGL     >=2.12.0.1,
+                       OpenGLRaw,
+                       OpenAL     >=1.7,
+                       ALUT       >=2.4,
                        GLFW-b,
+                       GLUtil,
+                       linear     >=1.19,
+                       lens       >=4.12,
+                       directory  >=1.2, 
                        filepath,
                        gtk3,
                        cairo,
-                       bytestring, vector,
-                       ALUT, OpenAL,
+                       bytestring,
+                       vector,
                        JuicyPixels >=3.2
-  
+
   -- Directories containing source files.
   hs-source-dirs:      lib
   
   -- Base language which the package is written in.
   default-language:    Haskell2010
-  
+
+  include-dirs:        C:\\Users\\Jonatan\\Desktop\\freealut\\include\\AL,
+                       C:\\Users\\Jonatan\\Downloads\\bin\\openal-soft-1.16.0-bin\\openal-soft-1.16.0-bin\\include
+
+  extra-lib-dirs:      C:\\Users\\Jonatan\\Desktop\\freealut\\admin\\VisualStudio6\\alut\\x64\\Release,
+                       C:\\Users\\Jonatan\\Downloads\\bin\\openal-soft-1.16.0-bin\\openal-soft-1.16.0-bin\\libs\\Win64
+
+  includes:            alut.h
+  extra-libraries:     OpenAL32, alut

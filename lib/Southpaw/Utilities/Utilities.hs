@@ -31,15 +31,15 @@
 
 
 
-module Southpaw.Utilities.Utilities (thousands, abbreviate, chunks, numeral, split, pairwise, cuts, count) where
+module Southpaw.Utilities.Utilities (thousands, abbreviate, chunks, numeral, split, pairwise, cuts, count, gridM) where
 
 
 
 ---------------------------------------------------------------------------------------------------
 -- We'll need these
 ---------------------------------------------------------------------------------------------------
-import Data.List (intercalate, unfoldr)
-
+import Data.List     (intercalate, unfoldr)
+import Control.Monad (forM, forM_)
 
 
 ---------------------------------------------------------------------------------------------------
@@ -134,6 +134,27 @@ numeral n = case n of
 -- | Counts the number of elements that satisfy the predicate
 count :: (a -> Bool) -> [a] -> Int
 count p = length . filter p
+
+
+-- Control structures -----------------------------------------------------------------------------
+-- |
+grid :: (Integral n) => n -> n -> [(n, n)]
+grid cols rows = [ (col, row) | col <- [1..cols], row <- [1..rows]]
+
+
+-- |
+gridM :: (Integral n, Monad m) => n -> n -> (n -> n -> m a) -> m [a]
+gridM cols rows f = forM (grid cols rows) (uncurry f)
+
+
+-- |
+gridM_ :: (Integral n, Monad m) => n -> n -> (n -> n -> m a) -> m ()
+gridM_ cols rows f = forM_ (grid cols rows) (uncurry f)
+
+
+-- Experiments ------------------------------------------------------------------------------------
+-- | Polymorphism with list of records of functions
+
 
 
 ---------------------------------------------------------------------------------------------------

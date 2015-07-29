@@ -6,8 +6,8 @@
 -- February 14 2015
 --
 
--- TODO | -
---        -
+-- TODO | - Python-style formatting
+--        - Customisation
 
 -- SPEC | -
 --        -

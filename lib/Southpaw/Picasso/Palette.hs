@@ -12,7 +12,7 @@
 --
 
 -- TODO | - Polymorphic colours (?)
---        -
+--        - Remove Cairo dependency (?)
 
 -- SPEC | -
 --        -
