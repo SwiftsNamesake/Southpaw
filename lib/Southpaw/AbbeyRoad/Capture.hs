@@ -79,9 +79,10 @@ numSamples secs = round (fromIntegral samplerate * secs)
 -- |
 sine :: Double -> [Sample]
 sine freq = cycle $ take n $ map sin [0, d..]
-	 where d = 2 * pi * freq / sr
-	       n = truncate (sr / freq)
-	       sr = fromIntegral samplerate
+	 where
+	   d  = 2 * pi * freq / sr
+	   n  = truncate (sr / freq)
+	   sr = fromIntegral samplerate
 
 ---------------------------------------------------------------------------------------------------
 
@@ -118,14 +119,15 @@ withCaptureDevice specifier secs onsuccess = bracket acquire finally between
 -- TODO: Refactor
 capture :: Maybe String -> Double -> (MemoryRegion CInt -> IO c) -> IO (Maybe c) -- According to GHCi
 capture specifier duration action = withCaptureDevice specifier duration record
-	where num        = numSamples duration
-	      record mic = do
-	      	sleep $ realToFrac duration                                                          -- Sleep until we should stop recording
-	      	mutableV <- V.thaw . V.fromList . map (pcm 16) . take (fromIntegral num) $ sine 220  -- 
-	      	withForeignPtr (vecPtr mutableV) $ \ptr -> captureSamples mic ptr (fromIntegral num) -- 
-	      	rec <- V.freeze mutableV                                                             -- 
-	      	let (mem, size) = V.unsafeToForeignPtr0 rec                                          -- 
-	      	withForeignPtr mem $ \ptr -> action $ MemoryRegion ptr (fromIntegral size)           -- 
+	where 
+	  num        = numSamples duration
+	  record mic = do
+	    sleep $ realToFrac duration                                                          -- Sleep until we should stop recording
+	    mutableV <- V.thaw . V.fromList . map (pcm 16) . take (fromIntegral num) $ sine 220  -- 
+	    withForeignPtr (vecPtr mutableV) $ \ptr -> captureSamples mic ptr (fromIntegral num) -- 
+	    rec <- V.freeze mutableV                                                             -- 
+	    let (mem, size) = V.unsafeToForeignPtr0 rec                                          -- 
+	    withForeignPtr mem $ \ptr -> action $ MemoryRegion ptr (fromIntegral size)           -- 
 
 ---------------------------------------------------------------------------------------------------
 

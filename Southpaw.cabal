@@ -56,14 +56,18 @@ library
   exposed-modules:     Southpaw.WaveFront.Parsers,   Southpaw.WaveFront.Foreign, Southpaw.WaveFront.Checks, Southpaw.WaveFront.Utilities, Southpaw.WaveFront.Load
                        Southpaw.WaveFront.SampleApp, 
                        
-                       Southpaw.Michelangelo.Utils, Southpaw.Michelangelo.Shaders
+                       Southpaw.Michelangelo.Utils, Southpaw.Michelangelo.Shaders, Southpaw.Michelangelo.Mesh, Southpaw.Michelangelo.Camera, Southpaw.Michelangelo.Transformations,
+                       Southpaw.Michelangelo.Entity,
 
-                       Southpaw.AbbeyRoad.Capture,
+                       Southpaw.Picasso.Palette, Southpaw.Picasso.RenderUtils, Southpaw.Picasso.Render, Southpaw.Picasso.Shapes,
+
+                       Southpaw.AbbeyRoad.Capture, Southpaw.AbbeyRoad.Play,
                        Southpaw.Utilities.Utilities, Southpaw.Units.Units,
-                       Southpaw.Cartesian.Cartesian,
-                       Southpaw.Picasso.Palette, Southpaw.Picasso.RenderUtils,
-                       Southpaw.Interactive.Application
-                       -- Southpaw.Utilities.Format,
+                       Southpaw.Cartesian.Space, Southpaw.Cartesian.Plane, Southpaw.Cartesian.Lenses,
+                       Southpaw.Interactive.Application,
+
+                       Southpaw.Math.Constants
+                       --Southpaw.Utilities.Format,
                        --Southpaw.Unicode.WinUnicodeConIO, Southpaw.Unicode.UnicodeTest,
   
   -- Modules included in this library but not exported.
@@ -90,7 +94,8 @@ library
                        cairo,
                        bytestring,
                        vector,
-                       JuicyPixels >=3.2
+                       JuicyPixels >=3.2,
+                       FTGL
 
   -- Directories containing source files.
   hs-source-dirs:      lib
@@ -99,10 +104,14 @@ library
   default-language:    Haskell2010
 
   include-dirs:        C:\\Users\\Jonatan\\Desktop\\freealut\\include\\AL,
-                       C:\\Users\\Jonatan\\Downloads\\bin\\openal-soft-1.16.0-bin\\openal-soft-1.16.0-bin\\include
+                       C:\\Users\\Jonatan\\Downloads\\bin\\openal-soft-1.16.0-bin\\openal-soft-1.16.0-bin\\include,
+                       C:\\Users\\Jonatan\\Downloads\\Programmering\\freetype-2.5.5-vc11-64\\freetype-2.5.5-vc11-64\\include,
+                       C:\\Users\\Jonatan\\Downloads\\Programmering\\ftgl-2.1.3-vc11-64\\ftgl-2.1.3-vc11-64\\include
 
   extra-lib-dirs:      C:\\Users\\Jonatan\\Desktop\\freealut\\admin\\VisualStudio6\\alut\\x64\\Release,
-                       C:\\Users\\Jonatan\\Downloads\\bin\\openal-soft-1.16.0-bin\\openal-soft-1.16.0-bin\\libs\\Win64
+                       C:\\Users\\Jonatan\\Downloads\\bin\\openal-soft-1.16.0-bin\\openal-soft-1.16.0-bin\\libs\\Win64,
+                       C:\\Users\\Jonatan\\Downloads\\Programmering\\freetype-2.5.5-vc11-64\\freetype-2.5.5-vc11-64\\lib,
+                       C:\\Users\\Jonatan\\Downloads\\Programmering\\ftgl-2.1.3-vc11-64\\ftgl-2.1.3-vc11-64\\lib
 
   includes:            alut.h
-  extra-libraries:     OpenAL32, alut
+  extra-libraries:     OpenAL32, alut, ftgl, freetype

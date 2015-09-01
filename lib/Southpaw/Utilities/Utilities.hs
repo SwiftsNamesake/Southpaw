@@ -31,7 +31,11 @@
 
 
 
-module Southpaw.Utilities.Utilities (thousands, abbreviate, chunks, numeral, split, pairwise, cuts, count, gridM) where
+-- | TODO: Organise exports (by category, haddock headers)
+module Southpaw.Utilities.Utilities (thousands, abbreviate, numeral, roman,
+                                     chunks, split, pairwise, cuts, count,
+                                     gridM, degrees,
+                                     radians, π) where
 
 
 
@@ -110,24 +114,42 @@ pairwise f xs = zipWith f xs $ drop 1 xs
 
 -- | Converts a positive integer to an English numeral. Numbers above twelve are converted to comma-separated strings
 --
--- TODO: 
+-- TODO: Refactor, simplify (?)
 --
 numeral :: Int -> String
 numeral n = case n of
-  0  -> "zero"
-  1  -> "one"
-  2  -> "two"
-  3  -> "three"
-  4  -> "four"
-  5  -> "five"
-  6  -> "six"
-  7  -> "seven"
-  8  -> "eight"
-  9  -> "nine"
-  10 -> "ten"
-  11 -> "eleven"
-  12 -> "twelve"
+  0  -> sign "zero"
+  1  -> sign "one"
+  2  -> sign "two"
+  3  -> sign "three"
+  4  -> sign "four"
+  5  -> sign "five"
+  6  -> sign "six"
+  7  -> sign "seven"
+  8  -> sign "eight"
+  9  -> sign "nine"
+  10 -> sign "ten"
+  11 -> sign "eleven"
+  12 -> sign "twelve"
   _  -> thousands (n :: Int)
+  where
+    sign | n < 0     = ("negative " ++) -- TODO: Use 'minus' instead, optional (?)
+         | otherwise = (id)
+
+
+-- |
+-- TODO: Finish
+roman :: Int -> Maybe Char
+roman n = case n of
+  0    -> Nothing
+  1    -> Just 'I'
+  5    -> Just 'V'
+  10   -> Just 'X'
+  50   -> Just 'L'
+  100  -> Just 'C'
+  500  -> Just 'D'
+  1000 -> Just 'M'
+
 
 
 -- General utilities ------------------------------------------------------------------------------
@@ -150,6 +172,23 @@ gridM cols rows f = forM (grid cols rows) (uncurry f)
 -- |
 gridM_ :: (Integral n, Monad m) => n -> n -> (n -> n -> m a) -> m ()
 gridM_ cols rows f = forM_ (grid cols rows) (uncurry f)
+
+
+-- Math -------------------------------------------------------------------------------------------
+--
+π :: Floating a => a 
+π = pi
+
+
+-- |
+-- TODO: Unit types, Num instance (?)
+-- TODO: Rename (eg. 'toDegrees', 'fromRadians') (?)
+degrees :: Floating f => f -> f
+degrees rad = rad * (180.0/π)
+
+-- |
+radians :: Floating f => f -> f
+radians deg = deg * (π/180.0)
 
 
 -- Experiments ------------------------------------------------------------------------------------
