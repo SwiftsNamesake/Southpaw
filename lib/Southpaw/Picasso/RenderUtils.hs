@@ -18,10 +18,7 @@
 
 
 
-module Southpaw.Picasso.RenderUtils (renderCentredText,
-	                                 choose,
-	                                 vectorise, closePath,
-	                                 grid, gridM_) where
+module Southpaw.Picasso.RenderUtils where
 
 
 
@@ -54,11 +51,34 @@ choose :: Palette.Colour Double -> Cairo.Render ()
 choose (r, g, b, a) = Cairo.setSourceRGBA r g b a
 
 
+-- Vector utilities -------------------------------------------------------------------------------
+-- TODO: Move to another module (?)
 -- |
-vectorise :: (Double -> Double -> a) -> Complex Double -> a
-vectorise f (re:+im) = f re im
+vectorise :: (Double -> Double -> a) -> (Complex Double) -> a
+vectorise f (x:+y) = f x y
 
 
+-- |
+flipx :: Complex Double -> Complex Double
+flipx (x:+y) = (-x):+y
+
+
+-- |
+flipy :: Complex Double -> Complex Double
+flipy (x:+y) = x:+(-y)
+
+
+-- |
+real :: Double -> Complex Double
+real = (:+ 0)
+
+
+-- |
+imag :: Double -> Complex Double
+imag = (0 :+)
+
+
+---------------------------------------------------------------------------------------------------
 -- | 
 -- TODO: Unsafe, use Maybe (?)
 closePath :: [Complex Double] -> [Complex Double]

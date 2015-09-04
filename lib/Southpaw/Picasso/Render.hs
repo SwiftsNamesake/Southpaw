@@ -39,9 +39,9 @@ import Control.Monad (forM_)
 
 import qualified Graphics.Rendering.Cairo as Cairo
 
-import qualified Southpaw.Picasso.Palette as Palette
+import qualified Southpaw.Picasso.Palette     as Palette
+import qualified Southpaw.Picasso.Shapes      as Shapes
 import           Southpaw.Picasso.RenderUtils
-import qualified Southpaw.Picasso.Shapes as Shapes
 import           Southpaw.Math.Constants
 
 
@@ -64,8 +64,9 @@ grid cols rows size = do
     Cairo.setLineWidth 4
     gridM_ cols rows $ \ cl rw -> tilePath cl rw >> Cairo.fill   --
     gridM_ cols rows $ \ cl rw -> tilePath cl rw >> Cairo.stroke --
-    where chooseColour cl rw = if (cl `mod` 2) == (rw `mod` 2) then 0.3 else 0.75 -- TODO: This should be a utility function
-          tilePath cl rw     = Cairo.rectangle (fromIntegral cl*size) (fromIntegral rw*size) size size >> Cairo.setSourceRGBA 0.22 0.81 (chooseColour cl rw) 0.32
+    where
+      chooseColour cl rw = if (cl `mod` 2) == (rw `mod` 2) then 0.3 else 0.75 -- TODO: This should be a utility function
+      tilePath cl rw     = Cairo.rectangle (fromIntegral cl*size) (fromIntegral rw*size) size size >> Cairo.setSourceRGBA 0.22 0.81 (chooseColour cl rw) 0.32
 
 
 -- |
@@ -74,6 +75,12 @@ arrow from to sl sw hw = do
     let (first:rest) = closePath $ Shapes.arrow from to sl sw hw
     vectorise Cairo.moveTo first
     forM_ rest $ vectorise Cairo.lineTo
+
+
+-- |
+-- TODO: Extract argument conversion logic (centre/size vectors to unpacked left-top/dx/dy)
+rectangle :: Complex Double -> Complex Double -> Cairo.Render ()
+rectangle (cx:+cy) (dx:+dy) = Cairo.rectangle (cx-dx/2) (cy-dy/2) dx dy
 
 
 -- | 
@@ -134,4 +141,44 @@ bezier :: Complex Double -> Complex Double -> Complex Double -> Cairo.Render ()
 bezier (x1:+y1) (x2:+y2) (x3:+y3) = Cairo.curveTo x1 y1 x2 y2 x3 y3
 
 
+-- |
+-- TODO: Generic rounded polygon
+roundrect :: Complex Double -> Complex Double -> Double -> Cairo.Render ()
+roundrect centre@(cx:+cy) size@(dx:+dy) radius = forM_ (zip [real, imag, real, imag] [(-dx):+(-dy), (dx):+(-dy), (dx):+(dy), (-dx):+(dy)]) $ \(dir, delta@(dx':+dy')) -> do
+	
+	-- 
+	-- let dir = (signum (dx*dy))
 
+	-- Line segment
+	vectorise Cairo.moveTo (centre + delta + dir radius)
+	vectorise Cairo.lineTo (centre - flipx size/2 - real radius)
+
+	-- Curve
+
+	-- -- First line segment
+	-- vectorise Cairo.moveTo (centre - size/2       + real radius)
+	-- vectorise Cairo.lineTo (centre - flipx size/2 - real radius)
+	
+	-- -- Curve
+	-- let (cx':+cy') = (centre - flipx size/2 + ((-radius):+radius)) in Cairo.arc cx' cy' radius (3*π/2) (4*π/2)
+
+	-- -- Second line segment
+	-- vectorise Cairo.moveTo (centre - flipx size/2  + imag radius)
+	-- vectorise Cairo.lineTo (centre + size/2        - imag radius)
+
+	-- -- Curve
+	-- let (cx':+cy') = (centre + size/2 - (radius:+radius)) in Cairo.arc cx' cy' radius 0 (π/2)
+
+	-- -- Third line segment
+	-- vectorise Cairo.moveTo (centre + size/2       - real radius)
+	-- vectorise Cairo.lineTo (centre - flipy size/2 + real radius)
+
+	-- -- Curve
+	-- let (cx':+cy') = (centre - flipy size/2 + flipy (radius:+radius)) in Cairo.arc cx' cy' radius (π/2) π
+
+	-- -- Fourth line segment
+	-- vectorise Cairo.moveTo (centre - flipy size/2 - imag radius)
+	-- vectorise Cairo.lineTo (centre - size/2       + imag radius)
+
+	-- -- Curve
+	-- let (cx':+cy') = (centre - size/2 + (radius:+radius)) in Cairo.arc cx' cy' radius π (3*π/2)

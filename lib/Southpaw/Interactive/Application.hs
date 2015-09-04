@@ -53,7 +53,8 @@ data App state = App { _window :: Window, _canvas :: DrawingArea, _size :: (Int,
 -- TODO: Wrapper for all key press events (?)
 data EventMap s = EventMap {
 
-	-- onmouseclick,
+	onmousedown :: Maybe (IORef s -> EventM EButton Bool),
+	onmouseup   :: Maybe (IORef s -> EventM EButton Bool),
 	-- onresize,
 	-- ondrawIO
 
@@ -124,8 +125,10 @@ bindWindowEvents app eventmap = do
 	perhaps (onmousemotion eventmap) $ \onmm -> window `on` motionNotifyEvent $ onmm stateref
 
 	-- perhaps (onmouseclick eventmap) $ \onmc -> window `on` _ $ 
-    -- canvas `on` buttonPressEvent   $ onbuttonpress worldref
-    -- canvas `on` buttonReleaseEvent $ onbuttonreleased worldref
+	perhapsBind window buttonPressEvent   onmousedown stateref
+	perhapsBind window buttonReleaseEvent onmouseup   stateref
+	-- perhaps (onmousedown eventmap) $ \omd -> window `on` buttonPressEvent   $ omd stateref
+	perhaps (onmouseup   eventmap) $ \omu -> window `on` buttonReleaseEvent $ omu stateref
 
 	-- perhaps (onresize     eventmap) $ \onrs -> window `on` _ $ 
     -- window `on` configureEvent $ onresize window worldref
@@ -140,7 +143,7 @@ bindWindowEvents app eventmap = do
 	return ()
 	where
 	  perhaps ma f = let pass = return () in maybe (pass) (\a -> f a >> pass) ma --
-
+	  perhapsBind win event find state = perhaps (find eventmap) $ \action -> win `on` event $ action state
 
 -- |
 -- TODO: Factor out non-canvas logic for reuse
@@ -169,3 +172,10 @@ createWindowWithCanvas w h appstate = do
 	stateref <- newIORef appstate
 
 	return $ App window canvas size stateref
+
+
+-- |
+-- TODO: Add setup argument (?)
+-- TODO: Use 'IO (App s)' or 'App s' directly (?)
+run :: IO (App s) -> IO ()
+run makeApp = makeApp >> mainGUI
