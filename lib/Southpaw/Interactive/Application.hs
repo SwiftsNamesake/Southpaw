@@ -6,12 +6,12 @@
 -- Maintainer  : Jonatan H Sundqvist
 -- Stability   : experimental|stable
 -- Portability : POSIX (not sure)
--- 
+--
 
 -- Created date year
 
--- TODO | - 
---        - 
+-- TODO | -
+--        -
 
 -- SPEC | -
 --        -
@@ -29,7 +29,7 @@ import Data.Complex             --
 import Data.IORef               --
 import Data.Maybe
 
-import Control.Monad (liftM, when)    --
+import Control.Monad (liftM, when, void)    --
 
 import Graphics.UI.Gtk          --
 import Graphics.Rendering.Cairo --
@@ -64,7 +64,7 @@ data EventMap s = EventMap {
 
 	onanimate :: Maybe (DrawingArea -> IORef s -> IO Bool),
 
-	ondraw   :: Maybe (s -> Render ()), 
+	ondraw   :: Maybe (s -> Render ()),
 
 	ondelete :: Maybe (IORef s -> EventM EAny Bool)
 	-- onquit :: IO s
@@ -103,34 +103,34 @@ widgetSize widget = do
 -- TODO: Refactor
 -- TODO: Factor out default event handlers
 -- TODO: Use state value from the App (?)
-createWindowWithCanvasAndEvents :: (Complex Int) -> Int -> s -> EventMap s -> IO (App s)
+createWindowWithCanvasAndEvents :: Complex Int -> Int -> s -> EventMap s -> IO (App s)
 createWindowWithCanvasAndEvents (w:+h) fps appstate eventmap = do
 	app <- createWindowWithCanvas w h appstate
-	stateref <- return $ _state app
+	let stateref = _state app
 	perhaps (onanimate eventmap) (\animate -> timeoutAdd (animate (_canvas app) stateref) (1000 `div` fps))
 	bindWindowEvents app eventmap
 	return app
 	where
 	  perhaps :: Maybe a -> (a -> IO b) -> IO ()
-	  perhaps ma f = maybe (return ()) (\a -> f a >> return ()) ma --
+	  perhaps ma f = maybe (return ()) (void . f) ma --
 
 
 -- |
 -- TODO: Use readstate for everything, or remove it (?)
 bindWindowEvents :: App s -> EventMap s -> IO ()
 bindWindowEvents app eventmap = do
-	
+
 	(window, canvas, stateref) <- return (_window app, _canvas app, _state app)
 
 	perhaps (onmousemotion eventmap) $ \onmm -> window `on` motionNotifyEvent $ onmm stateref
 
-	-- perhaps (onmouseclick eventmap) $ \onmc -> window `on` _ $ 
+	-- perhaps (onmouseclick eventmap) $ \onmc -> window `on` _ $
 	perhapsBind window buttonPressEvent   onmousedown stateref
 	perhapsBind window buttonReleaseEvent onmouseup   stateref
 	-- perhaps (onmousedown eventmap) $ \omd -> window `on` buttonPressEvent   $ omd stateref
 	perhaps (onmouseup   eventmap) $ \omu -> window `on` buttonReleaseEvent $ omu stateref
 
-	-- perhaps (onresize     eventmap) $ \onrs -> window `on` _ $ 
+	-- perhaps (onresize     eventmap) $ \onrs -> window `on` _ $
     -- window `on` configureEvent $ onresize window worldref
 
 	perhaps (onkeypress eventmap) $ \onkd -> window `on` keyPressEvent $ onkd stateref
@@ -138,11 +138,11 @@ bindWindowEvents app eventmap = do
 	perhaps (ondraw eventmap) $ \ond -> canvas `on` draw $ (liftIO (readIORef stateref) >>= ond)
 	-- let ondrawIO' = maybe readstate id (ondrawIO eventmap) $ stateref
 
-	window `on` deleteEvent $ maybe (\_ -> liftIO $ mainQuit >> return False) (id) (ondelete eventmap) $ stateref
+	window `on` deleteEvent $ fromMaybe (\_ -> liftIO $ mainQuit >> return False) (ondelete eventmap) stateref
 
 	return ()
 	where
-	  perhaps ma f = let pass = return () in maybe (pass) (\a -> f a >> pass) ma --
+	  perhaps ma f = let pass = return () in maybe pass (\a -> f a >> pass) ma --
 	  perhapsBind win event find state = perhaps (find eventmap) $ \action -> win `on` event $ action state
 
 -- |
@@ -166,9 +166,8 @@ createWindowWithCanvas w h appstate = do
 
 	-- Animation
 	size <- widgetSize window
-	print size
 
-	-- 
+	--
 	stateref <- newIORef appstate
 
 	return $ App window canvas size stateref

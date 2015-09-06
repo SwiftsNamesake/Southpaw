@@ -11,7 +11,7 @@
 -- Created September 1 2015
 
 -- TODO | - Rename (eg. Draw, Shapes) (?)
---        - 
+--        - Text, typography (find good library)
 
 -- SPEC | -
 --        -
@@ -21,7 +21,7 @@
 ---------------------------------------------------------------------------------------------------
 -- GHC directives
 ---------------------------------------------------------------------------------------------------
-
+{-# LANGUAGE TupleSections #-}
 
 
 ---------------------------------------------------------------------------------------------------
@@ -35,9 +35,12 @@ module Southpaw.Picasso.Render where
 -- We'll need these
 ---------------------------------------------------------------------------------------------------
 import Data.Complex
-import Control.Monad (forM_)
+import Control.Monad (forM_, liftM, liftM2)
 
-import qualified Graphics.Rendering.Cairo as Cairo
+import Control.Monad.IO.Class
+
+import qualified Graphics.Rendering.Cairo                         as Cairo
+-- import qualified Graphics.Rendering.Cairo.Internal.Surfaces.Image as Image
 
 import qualified Southpaw.Picasso.Palette     as Palette
 import qualified Southpaw.Picasso.Shapes      as Shapes
@@ -70,6 +73,17 @@ grid cols rows size = do
 
 
 -- |
+-- TODO: Support asymmetrical crosshairs (?)
+crosshairs :: Complex Double -> Complex Double -> Cairo.Render ()
+crosshairs (cx:+cy) (dx:+dy) = do
+    Cairo.moveTo (cx-dx/2) (cy)
+    Cairo.lineTo (cx+dx/2) (cy)
+
+    Cairo.moveTo (cx) (cy-dy/2)
+    Cairo.lineTo (cx) (cy+dy/2)
+
+
+-- |
 arrow :: Complex Double -> Complex Double -> Double -> Double -> Double -> Cairo.Render ()
 arrow from to sl sw hw = do
     let (first:rest) = closePath $ Shapes.arrow from to sl sw hw
@@ -84,7 +98,16 @@ rectangle (cx:+cy) (dx:+dy) = Cairo.rectangle (cx-dx/2) (cy-dy/2) dx dy
 
 
 -- | 
+-- TODO: Should anchor point be relative to centre or topleft corner, use normalised or absolute coords (?)
+-- TODO: Less confusing terminology...
+-- TODO: Refactor
+anchoredRectangle :: Complex Double -> Complex Double -> Complex Double -> Cairo.Render ()
+anchoredRectangle anchorpoint (dx:+dy) (ax:+ay) = rectangle (anchorpoint-(ax*dx:+ay*dy)+(0.5*dx:+0.5)) (dx:+dy)
+
+
+-- | 
 -- TODO: Add arguments for colour, stroke, etcairo.
+-- TODO: Maybe it'd be better if we stuck to the normal pattern of path-config-action that Cairo follows
 -- TODO: Make polymorphic
 polygon :: Integral int => int -> Double -> Complex Double -> (Double, Double, Double, Double) -> Bool -> Cairo.Render ()
 polygon sides radius origin (r,g,b,a) filled = do
@@ -97,7 +120,8 @@ polygon sides radius origin (r,g,b,a) filled = do
     if filled
         then Cairo.fill
         else Cairo.stroke
-    where ((fx:+fy):rest) = Shapes.polygon sides radius origin ++ [fx:+fy]
+    where
+      ((fx:+fy):rest) = Shapes.polygon sides radius origin ++ [fx:+fy]
 
 
 -- | 
@@ -182,3 +206,22 @@ roundrect centre@(cx:+cy) size@(dx:+dy) radius = forM_ (zip [real, imag, real, i
 
 	-- -- Curve
 	-- let (cx':+cy') = (centre - size/2 + (radius:+radius)) in Cairo.arc cx' cy' radius π (3*π/2)
+
+
+-- |
+-- TODO: Wrapper for images (?)
+image :: Complex Double -> Cairo.Surface -> Cairo.Render () 
+image (cx:+cy) im = do
+  (dx:+dy) <- imageSurfaceSize im
+
+  Cairo.setSourceSurface im 0 0
+  Cairo.rectangle (cx-dx/2) (cy-dy/2) dx dy
+  Cairo.clip
+  Cairo.paint
+  Cairo.resetClip
+  where
+    dotmap :: (a -> b) -> Complex a -> Complex b 
+    dotmap f (re:+im) = f re :+ f im
+
+    imageSurfaceSize :: MonadIO m => Cairo.Surface -> m (Complex Double)
+    imageSurfaceSize im = liftM (dotmap fromIntegral) $ liftM2 (:+) (Cairo.imageSurfaceGetWidth im) (Cairo.imageSurfaceGetHeight im) 
