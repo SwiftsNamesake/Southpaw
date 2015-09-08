@@ -6,7 +6,7 @@
 -- Maintainer  : Jonatan H Sundqvist
 -- Stability   : experimental|stable
 -- Portability : POSIX (not sure)
--- 
+--
 
 -- Created September 1 2015
 
@@ -46,6 +46,7 @@ import qualified Southpaw.Picasso.Palette     as Palette
 import qualified Southpaw.Picasso.Shapes      as Shapes
 import           Southpaw.Picasso.RenderUtils
 import           Southpaw.Math.Constants
+import           Southpaw.Cartesian.Plane.Utilities
 
 
 
@@ -53,7 +54,7 @@ import           Southpaw.Math.Constants
 -- Functions
 ---------------------------------------------------------------------------------------------------
 -- General ----------------------------------------------------------------------------------------
--- | 
+-- |
 trail :: Palette.Colour Double -> [Complex Double] -> Cairo.Render ()
 trail fill trail = forM_ trail $ \dot -> do
     choose fill
@@ -97,7 +98,7 @@ rectangle :: Complex Double -> Complex Double -> Cairo.Render ()
 rectangle (cx:+cy) (dx:+dy) = Cairo.rectangle (cx-dx/2) (cy-dy/2) dx dy
 
 
--- | 
+-- |
 -- TODO: Should anchor point be relative to centre or topleft corner, use normalised or absolute coords (?)
 -- TODO: Less confusing terminology...
 -- TODO: Refactor
@@ -105,7 +106,7 @@ anchoredRectangle :: Complex Double -> Complex Double -> Complex Double -> Cairo
 anchoredRectangle anchorpoint (dx:+dy) (ax:+ay) = rectangle (anchorpoint-(ax*dx:+ay*dy)+(0.5*dx:+0.5)) (dx:+dy)
 
 
--- | 
+-- |
 -- TODO: Add arguments for colour, stroke, etcairo.
 -- TODO: Maybe it'd be better if we stuck to the normal pattern of path-config-action that Cairo follows
 -- TODO: Make polymorphic
@@ -114,7 +115,7 @@ polygon sides radius origin (r,g,b,a) filled = do
     -- TODO: Refine 'wrap-around logic'
     Cairo.moveTo fx fy
     forM_ rest $ \(x:+y) -> Cairo.lineTo x y
-    
+
     Cairo.setSourceRGBA r g b a
     Cairo.setLineWidth 12
     if filled
@@ -124,7 +125,7 @@ polygon sides radius origin (r,g,b,a) filled = do
       ((fx:+fy):rest) = Shapes.polygon sides radius origin ++ [fx:+fy]
 
 
--- | 
+-- |
 -- TODO: Options for fill/stroke, colour, width, etcairo.
 circle :: Complex Double -> Double -> Cairo.Render ()
 circle (cx:+cy) radius = do
@@ -169,8 +170,8 @@ bezier (x1:+y1) (x2:+y2) (x3:+y3) = Cairo.curveTo x1 y1 x2 y2 x3 y3
 -- TODO: Generic rounded polygon
 roundrect :: Complex Double -> Complex Double -> Double -> Cairo.Render ()
 roundrect centre@(cx:+cy) size@(dx:+dy) radius = forM_ (zip [real, imag, real, imag] [(-dx):+(-dy), (dx):+(-dy), (dx):+(dy), (-dx):+(dy)]) $ \(dir, delta@(dx':+dy')) -> do
-	
-	-- 
+
+	--
 	-- let dir = (signum (dx*dy))
 
 	-- Line segment
@@ -182,7 +183,7 @@ roundrect centre@(cx:+cy) size@(dx:+dy) radius = forM_ (zip [real, imag, real, i
 	-- -- First line segment
 	-- vectorise Cairo.moveTo (centre - size/2       + real radius)
 	-- vectorise Cairo.lineTo (centre - flipx size/2 - real radius)
-	
+
 	-- -- Curve
 	-- let (cx':+cy') = (centre - flipx size/2 + ((-radius):+radius)) in Cairo.arc cx' cy' radius (3*π/2) (4*π/2)
 
@@ -210,7 +211,7 @@ roundrect centre@(cx:+cy) size@(dx:+dy) radius = forM_ (zip [real, imag, real, i
 
 -- |
 -- TODO: Wrapper for images (?)
-image :: Complex Double -> Cairo.Surface -> Cairo.Render () 
+image :: Complex Double -> Cairo.Surface -> Cairo.Render ()
 image (cx:+cy) im = do
   (dx:+dy) <- imageSurfaceSize im
 
@@ -219,9 +220,3 @@ image (cx:+cy) im = do
   Cairo.clip
   Cairo.paint
   Cairo.resetClip
-  where
-    dotmap :: (a -> b) -> Complex a -> Complex b 
-    dotmap f (re:+im) = f re :+ f im
-
-    imageSurfaceSize :: MonadIO m => Cairo.Surface -> m (Complex Double)
-    imageSurfaceSize im = liftM (dotmap fromIntegral) $ liftM2 (:+) (Cairo.imageSurfaceGetWidth im) (Cairo.imageSurfaceGetHeight im) 
