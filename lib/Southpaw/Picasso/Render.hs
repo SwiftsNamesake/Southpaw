@@ -74,14 +74,15 @@ grid cols rows size = do
 
 
 -- |
+line :: Complex Double -> Complex Double -> Cairo.Render ()
+line (fr:+om) (t:+o) = Cairo.moveTo fr om >> Cairo.lineTo t o
+
+-- |
 -- TODO: Support asymmetrical crosshairs (?)
 crosshairs :: Complex Double -> Complex Double -> Cairo.Render ()
 crosshairs (cx:+cy) (dx:+dy) = do
-    Cairo.moveTo (cx-dx/2) (cy)
-    Cairo.lineTo (cx+dx/2) (cy)
-
-    Cairo.moveTo (cx) (cy-dy/2)
-    Cairo.lineTo (cx) (cy+dy/2)
+  line ((cx-dx/2) :+ cy)        ((cx+dx/2) :+ cy)
+  line (cx        :+ (cy-dy/2)) (cx        :+ (cy+dy/2))
 
 
 -- |
@@ -211,12 +212,17 @@ roundrect centre@(cx:+cy) size@(dx:+dy) radius = forM_ (zip [real, imag, real, i
 
 -- |
 -- TODO: Wrapper for images (?)
-image :: Complex Double -> Cairo.Surface -> Cairo.Render ()
-image (cx:+cy) im = do
-  (dx:+dy) <- imageSurfaceSize im
-
+-- TODO: Factor out clip area (?)
+imageWithClip :: (Complex Double -> Complex Double -> Cairo.Render ()) -> Complex Double -> Cairo.Surface -> Cairo.Render ()
+imageWithClip clip centre im = do
+  size <- imageSurfaceSize im
   Cairo.setSourceSurface im 0 0
-  Cairo.rectangle (cx-dx/2) (cy-dy/2) dx dy
+  clip centre size
   Cairo.clip
   Cairo.paint
   Cairo.resetClip
+
+
+-- |
+image :: Complex Double -> Cairo.Surface -> Cairo.Render ()
+image = imageWithClip rectangle

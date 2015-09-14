@@ -60,7 +60,8 @@ data EventMap s = EventMap {
 
 	onmousemotion :: Maybe (IORef s -> EventM EMotion Bool),
 
-	onkeypress :: Maybe (IORef s -> EventM EKey Bool),
+	onkeydown :: Maybe (IORef s -> EventM EKey Bool),
+	onkeyup   :: Maybe (IORef s -> EventM EKey Bool),
 
 	onanimate :: Maybe (DrawingArea -> IORef s -> IO Bool),
 
@@ -133,7 +134,9 @@ bindWindowEvents app eventmap = do
 	-- perhaps (onresize     eventmap) $ \onrs -> window `on` _ $
     -- window `on` configureEvent $ onresize window worldref
 
-	perhaps (onkeypress eventmap) $ \onkd -> window `on` keyPressEvent $ onkd stateref
+	-- TODO: Use different handlers for key up/down
+	perhaps (onkeydown eventmap) $ \onkd -> window `on` keyPressEvent   $ onkd stateref
+	perhaps (onkeyup   eventmap) $ \onkd -> window `on` keyReleaseEvent $ onkd stateref
 
 	perhaps (ondraw eventmap) $ \ond -> canvas `on` draw $ (liftIO (readIORef stateref) >>= ond)
 	-- let ondrawIO' = maybe readstate id (ondrawIO eventmap) $ stateref

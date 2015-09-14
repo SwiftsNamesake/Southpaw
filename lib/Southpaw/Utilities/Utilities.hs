@@ -6,8 +6,8 @@
 -- March 08 2015
 --
 
--- TODO | - 
---        - 
+-- TODO | -
+--        -
 
 -- SPEC | -
 --        -
@@ -19,12 +19,12 @@
 -- Maintainer  : Jonatan H Sundqvist
 -- Stability   : experimental|stable
 -- Portability : POSIX (not sure)
--- 
+--
 
 -- Created March 08 2015
 
--- TODO | - 
---        - 
+-- TODO | -
+--        -
 
 -- SPEC | -
 --        -
@@ -176,7 +176,7 @@ gridM_ cols rows f = forM_ (grid cols rows) (uncurry f)
 
 -- Math -------------------------------------------------------------------------------------------
 --
-π :: Floating a => a 
+π :: Floating a => a
 π = pi
 
 
