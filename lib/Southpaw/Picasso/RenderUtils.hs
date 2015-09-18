@@ -40,14 +40,7 @@ import           Southpaw.Cartesian.Plane.Utilities
 -- Functions
 ---------------------------------------------------------------------------------------------------
 -- General rendering utilities --------------------------------------------------------------------
--- |
--- TODO: General anchor (?)
-renderCentredText :: Complex Double -> String -> Cairo.Render ()
-renderCentredText (cx:+cy) text = do
-	extents <- Cairo.textExtents text
-	let (w, h) = (Cairo.textExtentsWidth extents, Cairo.textExtentsHeight extents)
-	Cairo.moveTo (cx-w/2) (cy+h/2)
-	Cairo.showText text
+
 
 
 -- | Choose a colour
