@@ -69,7 +69,7 @@ library
 
                        Southpaw.Interactive.Application, Southpaw.Interactive.Console,
 
-                       Southpaw.Math.Constants
+                       Southpaw.Math.Constants, Southpaw.Math.Trigonometry
                        --Southpaw.Utilities.Format,
                        --Southpaw.Unicode.WinUnicodeConIO, Southpaw.Unicode.UnicodeTest,
 

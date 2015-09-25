@@ -22,9 +22,9 @@ module Southpaw.Picasso.RenderUtils where
 
 
 
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
 import Data.Complex
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad          (liftM, liftM2)
@@ -32,42 +32,59 @@ import Control.Monad          (liftM, liftM2)
 import qualified Graphics.Rendering.Cairo as Cairo
 
 import qualified Southpaw.Picasso.Palette as Palette
+import           Southpaw.Cartesian.Plane.Types
 import           Southpaw.Cartesian.Plane.Utilities
 
 
 
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
 -- Functions
----------------------------------------------------------------------------------------------------
--- General rendering utilities --------------------------------------------------------------------
-
-
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- General rendering utilities -------------------------------------------------------------------------------------------------------------
 
 -- | Choose a colour
 choose :: Palette.Colour Double -> Cairo.Render ()
 choose (r, g, b, a) = Cairo.setSourceRGBA r g b a
 
+-- Vector utilities ------------------------------------------------------------------------------------------------------------------------
 
--- Vector utilities -------------------------------------------------------------------------------
 -- TODO: Move to another module (?)
 -- |
-vectorise :: (Double -> Double -> a) -> (Complex Double) -> a
+vectorise :: (Double -> Double -> a) -> Complex Double -> a
 vectorise f (x:+y) = f x y
 
 
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
+
 -- |
 imageSurfaceSize :: MonadIO m => Cairo.Surface -> m (Complex Double)
 imageSurfaceSize im = liftM (dotmap fromIntegral) $ liftM2 (:+) (Cairo.imageSurfaceGetWidth im) (Cairo.imageSurfaceGetHeight im)
 
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+-- |
+textsize :: String -> Cairo.Render (Complex Double)
+textsize text = do
+  extents <- Cairo.textExtents text
+  return $ Cairo.textExtentsWidth extents :+ Cairo.textExtentsHeight extents
+
+
+-- |
+textbounds :: String -> Complex Double -> Cairo.Render (BoundingBox Double)
+textbounds text centre = do
+  size <- textsize text
+  return $ BoundingBox { _centre=centre, _size=size }
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+
 -- |
 -- TODO: Unsafe, use Maybe (?)
 closePath :: [Complex Double] -> [Complex Double]
-closePath path = path ++ [head path]
+closepath [p]  = [p]
+closePath path = path ++ take 1 path
 
+-- Control structures ----------------------------------------------------------------------------------------------------------------------
 
--- Control structures -----------------------------------------------------------------------------
 -- |
 grid :: (Integral n, Enum n) => n -> n -> (n -> n -> a) -> [a]
 grid cols rows f = [ f cl rw | cl <- [0..(cols-1)], rw <- [0..(rows-1)] ] -- Tiles

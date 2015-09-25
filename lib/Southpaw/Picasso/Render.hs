@@ -12,6 +12,7 @@
 
 -- TODO | - Rename (eg. Draw, Shapes) (?)
 --        - Text, typography (find good library)
+--        - Debug versions (cf. Occlusion.Render)
 
 -- SPEC | -
 --        -
@@ -55,6 +56,8 @@ import           Southpaw.Cartesian.Plane.Utilities
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- General ---------------------------------------------------------------------------------------------------------------------------------
 -- |
+-- TODO: Rename (eg. plot)
+-- TODO: Generalise (not just circles)
 trail :: Palette.Colour Double -> [Complex Double] -> Cairo.Render ()
 trail fill trail = forM_ trail $ \dot -> do
     choose fill
@@ -72,10 +75,19 @@ grid cols rows size = do
       chooseColour cl rw = if (cl `mod` 2) == (rw `mod` 2) then 0.3 else 0.75 -- TODO: This should be a utility function
       tilePath cl rw     = Cairo.rectangle (fromIntegral cl*size) (fromIntegral rw*size) size size >> Cairo.setSourceRGBA 0.22 0.81 (chooseColour cl rw) 0.32
 
+-- Primitives ------------------------------------------------------------------------------------------------------------------------------
 
 -- |
 line :: Complex Double -> Complex Double -> Cairo.Render ()
 line (fr:+om) (t:+o) = Cairo.moveTo fr om >> Cairo.lineTo t o
+
+
+-- | Renders a path of connected lines
+-- TODO: Options for colour, width, closed/open, etcairo.
+linepath :: [Complex Double] -> Cairo.Render ()
+linepath []      = return ()
+linepath (e:dge) = void $ vectorise Cairo.moveTo e >> forM dge (vectorise Cairo.lineTo)
+
 
 -- |
 -- TODO: Support asymmetrical crosshairs (?)
@@ -84,14 +96,7 @@ crosshairs (cx:+cy) (dx:+dy) = do
   line ((cx-dx/2) :+ cy)        ((cx+dx/2) :+ cy)
   line (cx        :+ (cy-dy/2)) (cx        :+ (cy+dy/2))
 
-
--- |
-arrow :: Complex Double -> Complex Double -> Double -> Double -> Double -> Cairo.Render ()
-arrow from to sl sw hw = do
-    let (first:rest) = closePath $ Shapes.arrow from to sl sw hw
-    vectorise Cairo.moveTo first
-    forM_ rest $ vectorise Cairo.lineTo
-
+-- Shapes ----------------------------------------------------------------------------------------------------------------------------------
 
 -- |
 -- TODO: Extract argument conversion logic (centre/size vectors to unpacked left-top/dx/dy)
@@ -133,15 +138,14 @@ circle (cx:+cy) radius = do
     Cairo.arc cx cy radius 0 τ
     Cairo.fill
 
+-- Composite -------------------------------------------------------------------------------------------------------------------------------
 
 -- |
--- TODO: Options for colour, width, closed/open, etcairo.
-path :: [Complex Double] -> Cairo.Render ()
-path []      = return ()
-path (p:ath) = do
-    vectorise Cairo.moveTo p
-    forM_ ath $ vectorise Cairo.lineTo
-    Cairo.stroke
+arrow :: Complex Double -> Complex Double -> Double -> Double -> Double -> Cairo.Render ()
+arrow from to sl sw hw = do
+    let (first:rest) = closePath $ Shapes.arrow from to sl sw hw
+    vectorise Cairo.moveTo first
+    forM_ rest $ vectorise Cairo.lineTo
 
 
 -- |
@@ -209,7 +213,6 @@ roundrect centre@(cx:+cy) size@(dx:+dy) radius = forM_ (zip [real, imag, real, i
 	-- -- Curve
 	-- let (cx':+cy') = (centre - size/2 + (radius:+radius)) in Cairo.arc cx' cy' radius π (3*π/2)
 
-
 -- Images ----------------------------------------------------------------------------------------------------------------------------------
 
 -- |
@@ -229,13 +232,12 @@ imageWithClip clip centre im = do
 image :: Complex Double -> Cairo.Surface -> Cairo.Render ()
 image = imageWithClip rectangle
 
-
 -- Typography ------------------------------------------------------------------------------------------------------------------------------
--- |
--- TODO: General anchor (?)
-centredText :: Complex Double -> String -> Cairo.Render ()
-centredText (cx:+cy) text = do
-	extents <- Cairo.textExtents text
-	let (w, h) = (Cairo.textExtentsWidth extents, Cairo.textExtentsHeight extents)
-	Cairo.moveTo (cx-w/2) (cy+h/2)
-	Cairo.showText text
+
+-- | Renders the given string (with an arbitrary function 'draw'). The position of the top left corner is
+--   given by the pin point 'p' and an 'anchor' (whose coordinates are normalised with respect to the text bounds).
+anchoredText :: Complex Double -> Complex Double -> (String -> Cairo.Render a) -> String -> Cairo.Render a
+anchoredText p anchor draw text = do
+  extents <- textsize text
+  vectorise Cairo.moveTo $ p - dotwise (*) anchor extents
+  draw text
