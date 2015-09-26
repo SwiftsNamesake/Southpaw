@@ -36,7 +36,7 @@ module Southpaw.Picasso.Render where
 -- We'll need these
 --------------------------------------------------------------------------------------------------------------------------------------------
 import Data.Complex
-import Control.Monad (forM_, liftM, liftM2)
+import Control.Monad (forM, forM_, liftM, liftM2, void)
 
 import Control.Monad.IO.Class
 
@@ -241,3 +241,8 @@ anchoredText p anchor draw text = do
   extents <- textsize text
   vectorise Cairo.moveTo $ p - dotwise (*) anchor extents
   draw text
+
+
+-- |
+centredText :: Complex Double -> (String -> Cairo.Render a) -> String -> Cairo.Render a
+centredText centre draw text = anchoredText centre (0.5:+0.5) draw text
