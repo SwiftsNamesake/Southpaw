@@ -10,8 +10,11 @@
 
 -- Created date year
 
--- TODO | -
---        -
+-- TODO | - Refactor (move types to separate module, add lenses)
+--        - Input queries, composite events (InputState type?)
+--        - Redesign API (less fragile and add-hoc) (divide into app types, eg. full screen canvas, etc.)
+--        - Optional event wrappers
+--        - Printf-style event coupling (with a Listener class (?))
 
 -- SPEC | -
 --        -
@@ -25,11 +28,12 @@ module Southpaw.Interactive.Application where
 ---------------------------------------------------------------------------------------------------
 -- We'll need these
 ---------------------------------------------------------------------------------------------------
-import Data.Complex             --
-import Data.IORef               --
-import Data.Maybe
+import Data.Complex --
+import Data.Functor --
+import Data.IORef   --
+import Data.Maybe   --
 
-import Control.Monad (liftM, when, void)    --
+import Control.Monad (liftM, when, void) --
 
 import Graphics.UI.Gtk          --
 import Graphics.Rendering.Cairo --
@@ -41,8 +45,12 @@ import Graphics.Rendering.Cairo --
 ---------------------------------------------------------------------------------------------------
 -- |
 -- TODO: Input state (?)
-data App state = App { _window :: Window, _canvas :: DrawingArea, _size :: (Int, Int), _state :: IORef state } --
+-- TODO: Layout type (?)
+data App state = App { _window :: Window, _canvas :: DrawingArea, _size :: Complex Int, _state :: IORef state } --
 -- data AppState = AppState { _game :: Game, _selected :: Maybe Int, _path :: [Complex Double] }                    --
+
+
+-- data WindowState = Layout { _window :: Window, _canvas :: DrawingArea, _size :: Complex Int }
 
 
 -- | High-level app setup (flags, config, cleanup, events, etc.)
@@ -168,7 +176,7 @@ createWindowWithCanvas w h appstate = do
 	widgetShowAll window
 
 	-- Animation
-	size <- widgetSize window
+	size <- uncurry (:+) <$> widgetSize window
 
 	--
 	stateref <- newIORef appstate
