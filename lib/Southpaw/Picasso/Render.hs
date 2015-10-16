@@ -13,6 +13,7 @@
 -- TODO | - Rename (eg. Draw, Shapes) (?)
 --        - Text, typography (find good library)
 --        - Debug versions (cf. Occlusion.Render)
+--        - Use BoundingBox (?)
 
 -- SPEC | -
 --        -
@@ -104,12 +105,13 @@ rectangle :: Complex Double -> Complex Double -> Cairo.Render ()
 rectangle (cx:+cy) (dx:+dy) = Cairo.rectangle (cx-dx/2) (cy-dy/2) dx dy
 
 
--- |
+-- | A rectangle with an 'anchor' (in normalised coordinates) that is relative to the centre
 -- TODO: Should anchor point be relative to centre or topleft corner, use normalised or absolute coords (?)
 -- TODO: Less confusing terminology...
 -- TODO: Refactor
+-- TODO: Test
 anchoredRectangle :: Complex Double -> Complex Double -> Complex Double -> Cairo.Render ()
-anchoredRectangle anchorpoint (dx:+dy) (ax:+ay) = rectangle (anchorpoint-(ax*dx:+ay*dy)+(0.5*dx:+0.5)) (dx:+dy)
+anchoredRectangle p size anchor = rectangle (p-dotwise (*) (anchor+(0.5:+0.5)) size) size
 
 
 -- |
@@ -176,6 +178,8 @@ bezier (x1:+y1) (x2:+y2) (x3:+y3) = Cairo.curveTo x1 y1 x2 y2 x3 y3
 roundrect :: Complex Double -> Complex Double -> Double -> Cairo.Render ()
 roundrect centre@(cx:+cy) size@(dx:+dy) radius = forM_ (zip [real, imag, real, imag] [(-dx):+(-dy), (dx):+(-dy), (dx):+(dy), (-dx):+(dy)]) $ \(dir, delta@(dx':+dy')) -> do
 
+  -- TODO: Finish refactoring
+
 	--
 	-- let dir = (signum (dx*dy))
 
@@ -216,33 +220,50 @@ roundrect centre@(cx:+cy) size@(dx:+dy) radius = forM_ (zip [real, imag, real, i
 -- Images ----------------------------------------------------------------------------------------------------------------------------------
 
 -- |
+-- TODO: Factor out clip logic, document properly (cf. other anchored functions in this module)
 -- TODO: Wrapper for images (?)
 -- TODO: Factor out clip area (?)
-imageWithClip :: (Complex Double -> Complex Double -> Cairo.Render ()) -> Complex Double -> Cairo.Surface -> Cairo.Render ()
-imageWithClip clip centre im = do
-  size <- imageSurfaceSize im
-  Cairo.setSourceSurface im 0 0
+anchoredImageWithClip :: (Complex Double -> Complex Double -> Cairo.Render ()) -> Complex Double -> Complex Double -> Cairo.Surface -> Cairo.Render ()
+anchoredImageWithClip clip p anchor im = do
+  size   <- imageSurfaceSize im
+  centre <- return $ p - dotwise (*) anchor size
   clip centre size
   Cairo.clip
+  vectorise Cairo.translate $ (centre - size*0.5)
+  Cairo.setSourceSurface im 0 0
+  -- vectorise Cairo.moveTo (centre - size*0.5)
   Cairo.paint
+  vectorise Cairo.translate $ negate (centre - size*0.5)
   Cairo.resetClip
 
 
 -- |
+anchoredImage :: Complex Double -> Complex Double -> Cairo.Surface -> Cairo.Render ()
+anchoredImage p anchor im = anchoredImageWithClip rectangle p anchor im
+
+
+-- |
+imageWithClip :: (Complex Double -> Complex Double -> Cairo.Render ()) -> Complex Double -> Cairo.Surface -> Cairo.Render ()
+imageWithClip clip centre im = anchoredImageWithClip clip centre (0.0:+0.0) im
+
+
+-- |
 image :: Complex Double -> Cairo.Surface -> Cairo.Render ()
-image = imageWithClip rectangle
+image p im = anchoredImageWithClip rectangle p (0.0:+0.0) im
 
 -- Typography ------------------------------------------------------------------------------------------------------------------------------
 
--- | Renders the given string (with an arbitrary function 'draw'). The position of the top left corner is
+-- | Renders the given string (with an arbitrary function 'draw'). The position of the centre of the bounding box is
 --   given by the pin point 'p' and an 'anchor' (whose coordinates are normalised with respect to the text bounds).
+-- TODO: Extract anchoring logic
+-- TODO: Define anchor constants (eg. left:+top, centre:+bottom) (?)
 anchoredText :: Complex Double -> Complex Double -> (String -> Cairo.Render a) -> String -> Cairo.Render a
 anchoredText p anchor draw text = do
   extents <- textsize text
-  vectorise Cairo.moveTo $ p - dotwise (*) anchor extents
+  vectorise Cairo.moveTo $ p - dotwise (*) (anchor + (0.5:+0.5)) extents
   draw text
 
 
 -- |
 centredText :: Complex Double -> (String -> Cairo.Render a) -> String -> Cairo.Render a
-centredText centre draw text = anchoredText centre (0.5:+0.5) draw text
+centredText centre draw text = anchoredText centre (0.0:+0.0) draw text

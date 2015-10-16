@@ -21,171 +21,167 @@
 
 
 
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- GHC directives
+--------------------------------------------------------------------------------------------------------------------------------------------
+{-# LANGUAGE RankNTypes #-}
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+-- API
+--------------------------------------------------------------------------------------------------------------------------------------------
 module Southpaw.Interactive.Application where
 
 
 
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
 -- We'll need these
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
 import Data.Complex --
 import Data.Functor --
 import Data.IORef   --
 import Data.Maybe   --
 
-import Control.Monad (liftM, when, void) --
+import Control.Lens hiding (set)
+import Control.Monad       (liftM, when, void, forM) --
+import Control.Applicative (pure, (<*>))
 
-import Graphics.UI.Gtk          --
-import Graphics.Rendering.Cairo --
+import Graphics.UI.Gtk                   --
+import qualified Graphics.Rendering.Cairo as Cairo --
 
-
-
----------------------------------------------------------------------------------------------------
--- Types
----------------------------------------------------------------------------------------------------
--- |
--- TODO: Input state (?)
--- TODO: Layout type (?)
-data App state = App { _window :: Window, _canvas :: DrawingArea, _size :: Complex Int, _state :: IORef state } --
--- data AppState = AppState { _game :: Game, _selected :: Maybe Int, _path :: [Complex Double] }                    --
-
-
--- data WindowState = Layout { _window :: Window, _canvas :: DrawingArea, _size :: Complex Int }
-
-
--- | High-level app setup (flags, config, cleanup, events, etc.)
--- TODO: Use more than one type variable (?)
--- TODO: Key maps, event maps
--- TODO: Rename type (?)
--- TODO: Assume stateref (?)
--- TODO: Wrapper for all key press events (?)
-data EventMap s = EventMap {
-
-	onmousedown :: Maybe (IORef s -> EventM EButton Bool),
-	onmouseup   :: Maybe (IORef s -> EventM EButton Bool),
-	-- onresize,
-	-- ondrawIO
-
-	onmousemotion :: Maybe (IORef s -> EventM EMotion Bool),
-
-	onkeydown :: Maybe (IORef s -> EventM EKey Bool),
-	onkeyup   :: Maybe (IORef s -> EventM EKey Bool),
-
-	onanimate :: Maybe (DrawingArea -> IORef s -> IO Bool),
-
-	ondraw   :: Maybe (s -> Render ()),
-
-	ondelete :: Maybe (IORef s -> EventM EAny Bool)
-	-- onquit :: IO s
-
-}
+import Southpaw.Interactive.Types
+import Southpaw.Interactive.Lenses
 
 
 
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
 -- Data
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+-- |
+-- TODO: Rename (eg. no-listeners), create a separate default value (?)
+nolisteners :: EventMap self s
+nolisteners = EventMap Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+
+-- |
+-- TODO: Rename (eg. no-listeners), create a separate default value (?)
+-- defaultListeners :: EventMap s
+-- defaultListeners = nolisteners { }
 
 
 
----------------------------------------------------------------------------------------------------
--- Default event handling
----------------------------------------------------------------------------------------------------
-
-
-
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
 -- Functions
----------------------------------------------------------------------------------------------------
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Master listeners ------------------------------------------------------------------------------------------------------------------------
+
+-- TODO: Hoogle section
+
+-- |
+masterdraw :: (s -> Cairo.Render ()) -> IORef s -> Cairo.Render ()
+masterdraw draw stateref = do
+	state <- Cairo.liftIO $ readIORef stateref
+	draw state
+
+-- General utilities -----------------------------------------------------------------------------------------------------------------------
+
 -- |
 -- TODO: Make polymorphic
-widgetSize :: WidgetClass self => self -> IO (Int, Int)
-widgetSize widget = do
-	w <- widgetGetAllocatedWidth widget
-	h <- widgetGetAllocatedHeight widget
-	return (w, h)
+widgetSize :: WidgetClass self => self -> IO (Complex Int)
+widgetSize widget = (:+) <$> widgetGetAllocatedWidth widget <*> widgetGetAllocatedHeight widget
 
+--------------------------------------------------------------------------------------------------------------------------------------------
 
 -- |
 -- TODO: Rename (duh)
 -- TODO: Refactor
 -- TODO: Factor out default event handlers
 -- TODO: Use state value from the App (?)
-createWindowWithCanvasAndEvents :: Complex Int -> Int -> s -> EventMap s -> IO (App s)
-createWindowWithCanvasAndEvents (w:+h) fps appstate eventmap = do
-	app <- createWindowWithCanvas w h appstate
-	let stateref = _state app
-	perhaps (onanimate eventmap) (\animate -> timeoutAdd (animate (_canvas app) stateref) (1000 `div` fps))
-	bindWindowEvents app eventmap
-	return app
-	where
-	  perhaps :: Maybe a -> (a -> IO b) -> IO ()
-	  perhaps ma f = maybe (return ()) (void . f) ma --
+wholecanvas :: WidgetSettings Window state -> WidgetSettings DrawingArea state -> state -> IO (App FullCanvasLayout state)
+wholecanvas windowSettings canvasSettings appstate = do
+	initGUI
+
+	window'  <- makeWidget windowNew      $ windowSettings
+	frame'   <- frameNew
+	canvas'  <- makeWidget drawingAreaNew $ canvasSettings
+	stateref <- newIORef appstate
+
+	containerAdd frame' canvas'
+	set window' [ containerChild := frame' ]
+
+	widgetShowAll window'
+	return $ App { _window=window', _layout=FullCanvasLayout { _canvas=canvas' }, _appsize=_settingsize windowSettings, _state=stateref }
 
 
 -- |
 -- TODO: Use readstate for everything, or remove it (?)
-bindWindowEvents :: App s -> EventMap s -> IO ()
-bindWindowEvents app eventmap = do
+-- TODO: Find out how to deal with 'onanimate'
+-- TODO: Event wrappers (eg. draw)
+attachListeners :: WidgetClass self => self -> IORef state -> EventMap self state -> IO ()
+attachListeners self stateref eventmap = do
+	simpleBind buttonPressEvent   onmousedown
+	simpleBind buttonReleaseEvent onmouseup
+	simpleBind motionNotifyEvent  onmousemotion
+	simpleBind keyPressEvent      onkeydown
+	simpleBind keyReleaseEvent    onkeyup
+	simpleBind deleteEvent        ondelete
+	-- simpleBind draw           (\emap -> maybe Nothing (void . Just . masterdraw dr) (ondraw emap))
+	maybe pass (\ondr -> void $ (self `on` draw $ masterdraw ondr stateref)) (ondraw eventmap)
+	maybe pass (\(fps, ona) -> void $ timeoutAdd (ona self stateref) 30) (onanimate eventmap)
 
-	(window, canvas, stateref) <- return (_window app, _canvas app, _state app)
-
-	perhaps (onmousemotion eventmap) $ \onmm -> window `on` motionNotifyEvent $ onmm stateref
-
-	-- perhaps (onmouseclick eventmap) $ \onmc -> window `on` _ $
-	perhapsBind window buttonPressEvent   onmousedown stateref
-	perhapsBind window buttonReleaseEvent onmouseup   stateref
-	-- perhaps (onmousedown eventmap) $ \omd -> window `on` buttonPressEvent   $ omd stateref
-	perhaps (onmouseup   eventmap) $ \omu -> window `on` buttonReleaseEvent $ omu stateref
-
-	-- perhaps (onresize     eventmap) $ \onrs -> window `on` _ $
-    -- window `on` configureEvent $ onresize window worldref
-
-	-- TODO: Use different handlers for key up/down
-	perhaps (onkeydown eventmap) $ \onkd -> window `on` keyPressEvent   $ onkd stateref
-	perhaps (onkeyup   eventmap) $ \onkd -> window `on` keyReleaseEvent $ onkd stateref
-
-	perhaps (ondraw eventmap) $ \ond -> canvas `on` draw $ (liftIO (readIORef stateref) >>= ond)
-	-- let ondrawIO' = maybe readstate id (ondrawIO eventmap) $ stateref
-
-	window `on` deleteEvent $ fromMaybe (\_ -> liftIO $ mainQuit >> return False) (ondelete eventmap) stateref
-
-	return ()
+	pass
+	-- perhapsBind self key onanimate
+	-- onresize, -- configureEvent
+	-- ondrawIO
+	-- perhapsBind self  onquit
+	-- forM [(self `on` motionNotifyEvent,  onmousemotion),
+	--       (self `on` buttonPressEvent,   onmousedown),
+	-- 			(self `on` buttonReleaseEvent, onmouseup)] $ \(signal, prop) -> perhaps (prop eventmap) (\listener -> signal $ listener stateref)
 	where
-	  perhaps ma f = let pass = return () in maybe pass (\a -> f a >> pass) ma --
-	  perhapsBind win event find state = perhaps (find eventmap) $ \action -> win `on` event $ action state
+		simpleBind = maybeBind self eventmap stateref
+
 
 -- |
--- TODO: Factor out non-canvas logic for reuse
-createWindowWithCanvas :: Int -> Int -> appstate -> IO (App appstate)
-createWindowWithCanvas w h appstate = do
-	--
-	initGUI
-	window <- windowNew
+pass :: Monad m => m ()
+pass = return ()
 
-	frame  <- frameNew
-	canvas <- drawingAreaNew
-	containerAdd frame canvas
 
-	set window [ containerChild := frame ]
-	windowSetDefaultSize window w h
+-- |
+-- bind :: WidgetClass self => self -> Signal ->
+bind :: WidgetClass self => self -> Signal self callback -> IORef s -> (IORef s -> callback) -> IO (ConnectId self)
+bind self event stateref action = self `on` event $ action stateref
 
-	widgetAddEvents canvas [PointerMotionMask] -- MouseButton1Mask
 
-	widgetShowAll window
+-- |
+maybeBind :: WidgetClass self => self -> EventMap self s -> IORef s -> Signal self callback -> (EventMap self s -> Maybe (IORef s -> callback)) -> IO ()
+maybeBind self eventmap state event find = maybe pass (void . bind self event state) (find eventmap)
 
-	-- Animation
-	size <- uncurry (:+) <$> widgetSize window
 
-	--
-	stateref <- newIORef appstate
+-- |
+makeWidget :: WidgetClass self => IO self -> WidgetSettings self s -> IO self
+makeWidget make settings = do
+	widget <- make
+	applySettings widget settings
 
-	return $ App window canvas size stateref
 
+-- |
+applySettings :: WidgetClass self => self -> WidgetSettings self s -> IO self
+applySettings self settings = do
+	widgetSetSizeRequest self dx dy -- TODO: Use windowSetDefaultSize instead (?)
+	widgetAddEvents self eventmasks
+	return self
+	where
+		(dx:+dy)   = _settingsize settings
+		eventmasks = _settingeventmasks settings
+
+--------------------------------------------------------------------------------------------------------------------------------------------
 
 -- |
 -- TODO: Add setup argument (?)
 -- TODO: Use 'IO (App s)' or 'App s' directly (?)
-run :: IO (App s) -> IO ()
+run :: IO (App layout state) -> IO ()
 run makeApp = makeApp >> mainGUI
