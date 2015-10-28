@@ -53,10 +53,7 @@ source-repository head
 
 library
   -- Modules exported by the library.
-  exposed-modules:     Southpaw.WaveFront.Parsers,   Southpaw.WaveFront.Foreign, Southpaw.WaveFront.Checks, Southpaw.WaveFront.Utilities, Southpaw.WaveFront.Load
-                       Southpaw.WaveFront.SampleApp,
-
-                       Southpaw.Picasso.Palette, Southpaw.Picasso.RenderUtils, Southpaw.Picasso.Render, Southpaw.Picasso.Shapes,
+  exposed-modules:     Southpaw.Picasso.Palette, Southpaw.Picasso.RenderUtils, Southpaw.Picasso.Render, Southpaw.Picasso.Shapes,
 
                        Southpaw.AbbeyRoad.Capture, Southpaw.AbbeyRoad.Play,
                        Southpaw.Utilities.Utilities, Southpaw.Units.Units,
