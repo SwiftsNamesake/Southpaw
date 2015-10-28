@@ -65,6 +65,7 @@ library
                        Southpaw.Utilities.Utilities, Southpaw.Units.Units,
 
                        Southpaw.Cartesian.Plane, Southpaw.Cartesian.Lenses, Southpaw.Cartesian.Plane.Types, Southpaw.Cartesian.Plane.BoundingBox, Southpaw.Cartesian.Plane.Utilities,
+                       Southpaw.Cartesian.Plane.BoundingBox.Lenses,
                        Southpaw.Cartesian.Space,
 
                        Southpaw.Interactive.Application, Southpaw.Interactive.Console, Southpaw.Interactive.Lenses, Southpaw.Interactive.Types,

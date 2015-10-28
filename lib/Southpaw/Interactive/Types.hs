@@ -57,7 +57,7 @@ data App layout state = App { _window :: Window, _layout :: layout, _appsize :: 
 
 -- |
 -- TODO: Fill out
-data WidgetSettings self state = WidgetSettings { _settingsize :: Complex Int, _settingeventmasks :: [EventMask], _settinglisteners :: EventMap state self }
+data WidgetSettings self state = WidgetSettings { _settingsize :: Complex Int, _settingeventmasks :: [EventMask], _settinglisteners :: EventMap self state }
 
 
 -- |

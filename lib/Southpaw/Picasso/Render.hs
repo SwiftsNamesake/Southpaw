@@ -26,6 +26,7 @@
 {-# LANGUAGE TupleSections #-}
 
 
+
 --------------------------------------------------------------------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -93,9 +94,11 @@ linepath (e:dge) = void $ vectorise Cairo.moveTo e >> forM dge (vectorise Cairo.
 -- |
 -- TODO: Support asymmetrical crosshairs (?)
 crosshairs :: Complex Double -> Complex Double -> Cairo.Render ()
-crosshairs (cx:+cy) (dx:+dy) = do
-  line ((cx-dx/2) :+ cy)        ((cx+dx/2) :+ cy)
-  line (cx        :+ (cy-dy/2)) (cx        :+ (cy+dy/2))
+crosshairs centre size = do
+  line (centre - (hdx:+0)) (centre + (hdx:+0))
+  line (centre - (0:+hdy)) (centre + (0:+hdy))
+  where
+    (hdx:+hdy) = 0.5*size
 
 -- Shapes ----------------------------------------------------------------------------------------------------------------------------------
 
@@ -138,7 +141,7 @@ polygon sides radius origin (r,g,b,a) filled = do
 circle :: Complex Double -> Double -> Cairo.Render ()
 circle (cx:+cy) radius = do
     Cairo.arc cx cy radius 0 τ
-    Cairo.fill
+    -- Cairo.fill
 
 -- Composite -------------------------------------------------------------------------------------------------------------------------------
 

@@ -105,10 +105,11 @@ wholecanvas :: WidgetSettings Window state -> WidgetSettings DrawingArea state -
 wholecanvas windowSettings canvasSettings appstate = do
 	initGUI
 
-	window'  <- makeWidget windowNew      $ windowSettings
-	frame'   <- frameNew
-	canvas'  <- makeWidget drawingAreaNew $ canvasSettings
 	stateref <- newIORef appstate
+
+	window'  <- makeWidget windowNew stateref $ windowSettings
+	frame'   <- frameNew
+	canvas'  <- makeWidget drawingAreaNew stateref $ canvasSettings
 
 	containerAdd frame' canvas'
 	set window' [ containerChild := frame' ]
@@ -130,8 +131,8 @@ attachListeners self stateref eventmap = do
 	simpleBind keyReleaseEvent    onkeyup
 	simpleBind deleteEvent        ondelete
 	-- simpleBind draw           (\emap -> maybe Nothing (void . Just . masterdraw dr) (ondraw emap))
-	maybe pass (\ondr -> void $ (self `on` draw $ masterdraw ondr stateref)) (ondraw eventmap)
-	maybe pass (\(fps, ona) -> void $ timeoutAdd (ona self stateref) 30) (onanimate eventmap)
+	maybe pass (\ondr       -> void $ (self `on` draw $ masterdraw ondr stateref)) (ondraw eventmap)
+	maybe pass (\(fps, ona) -> void $ timeoutAdd (ona self stateref) fps)          (onanimate eventmap)
 
 	pass
 	-- perhapsBind self key onanimate
@@ -162,17 +163,18 @@ maybeBind self eventmap state event find = maybe pass (void . bind self event st
 
 
 -- |
-makeWidget :: WidgetClass self => IO self -> WidgetSettings self s -> IO self
-makeWidget make settings = do
+makeWidget :: WidgetClass self => IO self -> IORef s -> WidgetSettings self s -> IO self
+makeWidget make stateref settings = do
 	widget <- make
-	applySettings widget settings
+	applySettings widget stateref settings
 
 
 -- |
-applySettings :: WidgetClass self => self -> WidgetSettings self s -> IO self
-applySettings self settings = do
+applySettings :: WidgetClass self => self -> IORef s -> WidgetSettings self s -> IO self
+applySettings self stateref settings = do
 	widgetSetSizeRequest self dx dy -- TODO: Use windowSetDefaultSize instead (?)
 	widgetAddEvents self eventmasks
+	attachListeners self stateref (_settinglisteners settings)
 	return self
 	where
 		(dx:+dy)   = _settingsize settings
