@@ -98,7 +98,7 @@ cuts c = splitWith $ \ xs -> let (token, rest) = span (/=c) xs in (token, drop 1
 -- |
 -- TODO: Accept a function (eg. (a -> a -> b))
 pairwise :: (a -> a -> b) -> [a] -> [b]
-pairwise f xs = zipWith f xs $ drop 1 xs
+pairwise f xs = zipWith f xs (drop 1 xs)
 
 
 -- Verb conjugation
