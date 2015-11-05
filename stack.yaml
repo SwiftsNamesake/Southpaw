@@ -1,0 +1,15 @@
+extra-deps:
+  - ALUT-2.4.0.0
+  - FTGL-2.1
+  - GLFW-b-1.4.7.3
+  - GLURaw-1.5.0.2
+  - GLUtil-0.8.6
+  - ObjectName-1.1.0.0
+  - OpenAL-1.7.0.1
+  - OpenGL-2.12.0.1
+  - OpenGLRaw-2.5.5.0
+  - bindings-GLFW-3.1.1.4
+resolver: lts-3.5
+flags: {}
+packages:
+- '.'

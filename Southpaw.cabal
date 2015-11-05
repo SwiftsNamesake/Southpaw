@@ -10,7 +10,7 @@ name:                Southpaw
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             0.1.0.4
+version:             0.2.0.0
 
 -- A short (one-line) description of the package.
 synopsis:            Assorted utility modules
@@ -57,10 +57,6 @@ library
 
                        Southpaw.AbbeyRoad.Capture, Southpaw.AbbeyRoad.Play,
                        Southpaw.Utilities.Utilities, Southpaw.Units.Units,
-
-                       Southpaw.Cartesian.Plane, Southpaw.Cartesian.Lenses, Southpaw.Cartesian.Plane.Types, Southpaw.Cartesian.Plane.BoundingBox, Southpaw.Cartesian.Plane.Utilities,
-                       Southpaw.Cartesian.Plane.BoundingBox.Lenses,
-                       Southpaw.Cartesian.Space,
 
                        Southpaw.Interactive.Application, Southpaw.Interactive.Console, Southpaw.Interactive.Lenses, Southpaw.Interactive.Types,
 
